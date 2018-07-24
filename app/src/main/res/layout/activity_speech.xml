@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp" >
+
+    <EditText
+        android:id="@+id/iat_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.5"
+        android:gravity="top|left"
+        android:hint="@string/text_show_iat_result"
+        android:paddingBottom="10dp"
+        android:textSize="20sp" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+
+        <Switch
+            android:id="@+id/switch_speaker"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:checked="true"
+            android:paddingLeft="50dp"
+            android:paddingRight="50dp"
+            android:textOff="耳机"
+            android:textOn="免提"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/text_speaker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="免提"
+            android:textSize="32sp" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/iat_recognize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="开始"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/iat_stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="停止"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/iat_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="取消"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/iat_recognize_stream"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="音频流识别"
+        android:textSize="20sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/iat_upload_wav"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="上传音频"
+            android:textSize="17sp" />
+
+        <!--<Button-->
+            <!--android:id="@+id/iat_upload_userwords"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:text="上传词表"-->
+            <!--android:textSize="17sp" />-->
+    </LinearLayout>
+
+</LinearLayout>

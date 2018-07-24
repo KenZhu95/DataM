@@ -1,0 +1,73 @@
+<resources>
+    <string name="app_name">DataM</string>
+    <string name="ip_address">IP Address</string>
+    <string name="port">Port</string>
+    <string name="action_clear">Clear</string>
+    <string name="send_as">Send as</string>
+    <string name="bytes">Bytes</string>
+    <string name="string">String</string>
+    <string name="message">Message</string>
+    <string name="udp_message_instructions">When using \"Send as bytes\" the message field needs to contain byte values in range (0-255) or (00 to FF in case of hex) separated by space.</string>
+    <string name="hex">Hex</string>
+    <string name="send">Send</string>
+    <string name="ip_blank">IP Address is blank</string>
+    <string name="ip_pattern_incorrect">IP pattern incorrect</string>
+    <string name="port_empty">Port is empty</string>
+    <string name="port_value_invalid">Value of port is invalid</string>
+    <string name="port_not_integer">Port is not a valid integer</string>
+    <string name="message_invalid">Message invalid</string>
+    <string name="sent">Sent</string>
+    <string name="expect_reply">Expect reply</string>
+    <string name="recd_reply">Received reply</string>
+    <string name="if_traffic">Show Traffic</string>
+    <string name="start_navi">Start Navigation</string>
+    <drawable name="bkcolor">#000000</drawable>
+
+    <!-- 听写 -->
+    <string name="text_begin">请开始说话…</string>
+    <string name="text_begin_recognizer">开始音频流识别</string>
+    <string name="text_begin_ise">开始音频流评测</string>
+    <string name="text_upload_contacts">上传联系人</string>
+    <string name="text_upload_userwords">上传用户词表</string>
+    <string name="text_upload_success">上传成功</string>
+    <string name="text_userword_empty">词表下载失败或内容为空</string>
+    <string name="text_download_success">下载成功</string>
+    <string name="pref_key_iat_show">iat_show</string>
+    <string name="pref_title_iat_show">显示听写界面</string>
+    <string name="text_show_contacts">上传联系人/词表显示</string>
+    <string name="text_show_iat_result">听写结果显示</string>
+    <string name="speech_app_id">5b47082a</string>
+
+    <string name="pref_key_translate">translate</string>
+    <string name="pref_title_translate">翻译</string>
+
+    <!-- 语言 -->
+    <string-array name="language_entries">
+        <item>普通话</item>
+        <item>粤语</item>
+        <item>英语</item>
+    </string-array>
+    <string-array name="language_values">
+        <item>mandarin</item>
+        <item>cantonese</item>
+        <item>en_us</item>
+    </string-array>
+
+    <string-array name="result_level_entries">
+        <item>plain</item>
+        <item>complete</item>
+    </string-array>
+    <!-- 标点符号 -->
+    <string-array name="punc_entries">
+        <item>有标点</item>
+        <item>无标点</item>
+    </string-array>
+    <string-array name="punc_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="dwa_entries">
+        <item>开启</item>
+        <item>关闭</item>
+    </string-array>
+</resources>

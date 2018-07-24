@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LogoffActivity">
+
+    <TextView
+        android:id="@+id/text_index_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:fontFamily="sans-serif"
+        android:text="车辆号"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edit_index_off"
+        android:layout_width="215dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="68dp"
+        android:layout_marginStart="68dp"
+        android:layout_marginTop="16dp"
+        android:inputType="none"
+        android:focusable="false"
+        app:layout_constraintStart_toEndOf="@+id/text_index_off"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/text_date_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:text="结束日期"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_index_off" />
+
+    <EditText
+        android:id="@+id/edit_date_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:ems="10"
+        android:inputType="none"
+        android:focusable="false"
+        app:layout_constraintStart_toStartOf="@+id/edit_index_off"
+        app:layout_constraintTop_toTopOf="@+id/text_date_off" />
+
+    <TextView
+        android:id="@+id/text_time_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:text="时间"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_date_off" />
+
+    <EditText
+        android:id="@+id/edit_time_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="none"
+        android:focusable="false"
+        app:layout_constraintStart_toStartOf="@+id/edit_date_off"
+        app:layout_constraintTop_toTopOf="@+id/text_time_off" />
+
+
+    <TextView
+        android:id="@+id/text_end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:text="结束里程"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_time_off" />
+
+
+    <EditText
+        android:id="@+id/edit_km_off"
+        android:layout_width="172dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="number"
+        app:layout_constraintStart_toStartOf="@+id/edit_time_off"
+        app:layout_constraintTop_toTopOf="@+id/text_end" />
+
+
+
+    <TextView
+        android:id="@+id/text_km_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="12dp"
+        android:text="km"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@+id/edit_km_off"
+        app:layout_constraintTop_toTopOf="@+id/edit_km_off" />
+
+    <Button
+        android:id="@+id/button_end_test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="80dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginStart="40dp"
+        android:background="@color/colorNormal"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="10dp"
+        android:text="结束测试"
+        android:textSize="28sp"
+        android:textColor="@color/snowWhite"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button_cancel_test_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="80dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginRight="40dp"
+        android:background="@color/colorWarning"
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="10dp"
+        android:text="取消结束"
+        android:textSize="28sp"
+        android:textColor="@color/snowWhite"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</android.support.constraint.ConstraintLayout>

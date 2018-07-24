@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MapActivity">
+
+    <LinearLayout
+        android:id="@+id/checkBoxes"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+
+        <CheckedTextView
+            android:id="@+id/checkbox_traffic"
+            android:layout_width="160dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="5dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="?android:attr/textColorAlertDialogListItem"
+            android:text="@string/if_traffic"
+            android:checked="true"
+            android:gravity="center_vertical"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:checkMark="?android:attr/listChoiceIndicatorSingle"
+            android:ellipsize="marquee"
+            />
+
+        <Button
+            android:id="@+id/button_navi"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/start_navi"
+            android:clickable="true"/>
+
+    </LinearLayout>
+
+    <com.baidu.mapapi.map.MapView
+        android:id="@+id/bmapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:layout_marginTop="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</android.support.constraint.ConstraintLayout>
