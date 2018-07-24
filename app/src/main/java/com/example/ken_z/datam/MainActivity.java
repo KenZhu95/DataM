@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     //private static final String APP_IP = "10.110.110.188";
     private static final String APP_IP = "192.168.8.99";
     private static final int APP_PORT = 9980;
+    private static final int SERVER_RECEIVE_PORT = 9992;
 
     private static final int MAXNUM = 10;
     private static final int REVNUM = 12;
@@ -90,6 +91,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private DatagramSocket r_socket;
     private DatagramSocket s_socket_heart;
     private DatagramSocket s_socket_navigation;
+
+    boolean ifToSendNavStartAck = false;
+    boolean ifToSendNavAbortAck = false;
+    boolean ifToSendNavFinishAck = false;
 
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
@@ -154,11 +159,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         new UdpReceiveThread().start();
         new UdpHeartBeatThread().start();
+        new UdpNavigationThread().start();
 
         //gary  #D4D4D4
         //green #7FFF00
         //red   #FF4500
-
 
         buttonPermission.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,12 +183,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startSpeech();
             }
         });
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createDialog();
-            }
-        });
+//        button1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                createDialog();
+//            }
+//        });
 
     }
 
@@ -301,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                 String send_content = send_object.toString();
 
-                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
+                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
                 r_socket.setSoTimeout(TIMEOUT);
                 int tries = 0;
@@ -449,6 +454,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                             break;
                                         case 23:
                                             //notify cancellation of navigation
+                                            EventBus.getDefault().post(new NavAbortEvent(true));
                                             break;
                                         case 31:
                                             //acknowledge for audio tag
@@ -508,7 +514,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     public class UdpHeartBeatThread extends Thread {
         @Override
         public void run() {
-
             try {
                 String ipValidation = Validation.validateIP(APP_IP);
                 Log.d("AndroidUDP", "IP:" + ipValidation);
@@ -517,11 +522,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 s_socket_heart = new DatagramSocket();
                 JSONObject send_object = new JSONObject();
                 send_object.put("CHK", "pandora");
-                send_object.put("LEN", "999999");
+                send_object.put("LEN", "99999");
                 send_object.put("ETT", 12);
-                String send_content = send_object.toString();
+                int len = send_object.toString().getBytes().length;
+                String lenString = String.format("%05d", len);
+                send_object.put("LEN", lenString);
 
-                DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
+                String send_content = send_object.toString();
+                DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 while (listenStatus) {
                     s_socket_heart.send(dp_send_heart);
                     //send a heart beat package every 20 seconds
@@ -531,6 +539,77 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         e.printStackTrace();
                     }
                 }
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.d("AndroidUDP", e.getMessage());
+            }
+        }
+    }
+
+    public class UdpNavigationThread extends Thread {
+        @Override
+        public void run() {
+
+            try {
+                String ipValidation = Validation.validateIP(APP_IP);
+                Log.d("AndroidUDP", "IP:" + ipValidation);
+
+                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
+                s_socket_navigation = new DatagramSocket();
+                JSONObject send_object = new JSONObject();
+                send_object.put("CHK", "pandora");
+                send_object.put("LEN", "60000");
+                while (listenStatus) {
+                    if (ifToSendNavStartAck) {
+                        send_object.put("ETT", 22);
+
+                        int len = send_object.toString().getBytes().length;
+                        String lenString = String.format("%05d", len);
+                        send_object.put("LEN", lenString);
+
+                        String send_content = send_object.toString();
+                        DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+
+                        s_socket_navigation.send(dp_send_start);
+                        ifToSendNavStartAck = false;
+                    }
+
+                    if (ifToSendNavAbortAck) {
+                        send_object.put("ETT", 24);
+                        int len = send_object.toString().getBytes().length;
+                        String lenString = String.format("%05d", len);
+                        send_object.put("LEN", lenString);
+
+                        String send_content = send_object.toString();
+                        DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+
+                        s_socket_navigation.send(dp_send_start);
+                        ifToSendNavAbortAck = false;
+                    }
+
+                    if (ifToSendNavFinishAck) {
+                        send_object.put("ETT", 25);
+                        int len = send_object.toString().getBytes().length;
+                        String lenString = String.format("%05d", len);
+                        send_object.put("LEN", lenString);
+
+                        String send_content = send_object.toString();
+                        DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+
+                        s_socket_navigation.send(dp_send_start);
+                        ifToSendNavFinishAck = false;
+                    }
+                }
+
+                int len = send_object.toString().getBytes().length;
+                String lenString = String.format("%05d", len);
+                send_object.put("LEN", lenString);
+
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             } catch (SocketException e) {
@@ -635,6 +714,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNavAbortEventMainThread(NavAbortEvent event) {
+        if (event != null) {
+            boolean abort = event.isMsg_abort();
+            if (abort) {
+                createAbortDialog();
+            }
+        }
+    }
+
 
 
     private void voiceWarning(int level) {
@@ -723,6 +812,64 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mOffTimer.schedule(tt, 1000, 1000);
     }
 
+
+    public void createAbortDialog() {
+        mOffTextView = new TextView(this);
+        mDialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("Abort Navigation")
+                .setCancelable(false)
+                .setView(mOffTextView)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ifToSendNavAbortAck = true;
+                        mOffTimer.cancel();
+                        Toast.makeText(MainActivity.this, "退出导航任务", Toast.LENGTH_LONG).show();
+
+                        //off();
+                    }
+                })
+                .create();
+        mDialog.show();
+        mDialog.setCanceledOnTouchOutside(false);
+
+        mOffHandler = new Handler() {
+            public void handleMessage(Message msg) {
+                if (msg.what > 0) {
+                    mOffTextView.setText( msg.what+ "秒后自动结束导航任务");
+                    mOffTextView.setTextSize(24);
+                    mOffTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+                    mOffTextView.setGravity(Gravity.CENTER);
+                } else {
+                    if (mDialog != null) {
+                        mDialog.dismiss();
+                        ifToSendNavAbortAck = true;
+                        Toast.makeText(MainActivity.this, "退出导航任务", Toast.LENGTH_LONG).show();
+                    }
+                    //off();
+                    mOffTimer.cancel();
+                }
+                super.handleMessage(msg);
+            }
+        };
+
+        //count down timer
+        mOffTimer = new Timer(true);
+        TimerTask tt = new TimerTask() {
+            int countTime = 10;
+            @Override
+            public void run() {
+                if (countTime > 0) {
+                    countTime--;
+                }
+                Message msg = new Message();
+                msg.what = countTime;
+                mOffHandler.sendMessage(msg);
+            }
+        };
+        mOffTimer.schedule(tt, 1000, 1000);
+    }
+
     public void launchGuide() {
         PackageManager packageManager = getPackageManager();
         if (isApkInstalled(getApplicationContext(),GUIDE_APP_NAME)) {
@@ -741,13 +888,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-
-
     @Override
     public void onBackPressed() {
         Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
         startActivity(intent);
     }
-
 
 }

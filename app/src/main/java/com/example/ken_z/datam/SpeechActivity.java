@@ -56,7 +56,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
 
     public static final String PREFER_NAME = "com.iflytek.setting";
     private static final String APP_IP = "192.168.8.99";
-    private static final int APP_PORT = 9980;
+    private static final int SERVER_RECEIVE_PORT = 9992;
     private static String TAG = SpeechActivity.class.getSimpleName();
     // 语音听写对象
     private SpeechRecognizer mIat;
@@ -612,7 +612,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                             String lenString = String.format("%05d", len);
                             send_object.put("LEN", lenString);
                             String send_content = send_object.toString();
-                            DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
+                            DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                             s_socket_audio.send(dp_send_audio);
                         }
                         send_object.put("INDEX", totalNumbers);
@@ -625,7 +625,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         send_object.put("LEN", lenString);
 
                         String send_content = send_object.toString();
-                        DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
+                        DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                         s_socket_audio.send(dp_send_audio);
 
                         tries_audio++;

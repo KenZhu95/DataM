@@ -33,6 +33,7 @@ import de.greenrobot.event.EventBus;
 public class LogoffActivity extends AppCompatActivity {
     private static final String APP_IP = "192.168.8.99";
     private static final int MAXNUM = 10;
+    private static final int SERVER_RECEIVE_PORT = 9992;
 
     EditText dateEdit;
     EditText timeEdit;
@@ -209,7 +210,7 @@ public class LogoffActivity extends AppCompatActivity {
                         send_object.put("LEN", lenString);
 
                         String send_content = send_object.toString();
-                        DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
+                        DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
 
                         s_socket_stop.send(dp_send_start);
                         tries_stop++;
