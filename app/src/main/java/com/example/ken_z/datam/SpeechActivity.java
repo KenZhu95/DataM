@@ -29,10 +29,8 @@ import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
-import com.iflytek.cloud.SpeechUtility;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
-import com.iflytek.cloud.util.ContactManager;
 import com.iflytek.sunflower.FlowerCollector;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -40,7 +38,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.DatagramPacket;
@@ -132,7 +129,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             }
         });
 
-        String SEND_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/iat.wav";
+//        String SEND_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/iat.wav";
 //        try {
 //            accessFile = new RandomAccessFile(SEND_FILE_PATH, "r");
 //            long ac_length = accessFile.length();
@@ -189,7 +186,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.iat_recognize).setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_recognize_stream).setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_upload_wav).setOnClickListener(SpeechActivity.this);
-        //findViewById(R.id.iat_upload_userwords).setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_stop).setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_cancel).setOnClickListener(SpeechActivity.this);
     }
@@ -541,11 +537,13 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onStart() {
         super.onStart();
+        //Event Bus register
         EventBus.getDefault().register(this);
     }
 
     @Override
     protected void onStop() {
+        //Event Bus unregister
         EventBus.getDefault().unregister(this);
         super.onStop();
     }
@@ -587,14 +585,12 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
 
                 while (listenStatus) {
                     while (ifToSendAudio && tries_audio < MAXNUM) {
-                        if (curDates.length == 3 && curTimes.length == 3) {
-                            send_time.put("YEAR", curDates[0]);
-                            send_time.put("MON", curDates[1]);
-                            send_time.put("DAY", curDates[2]);
-                            send_time.put("HOUR", curTimes[0]);
-                            send_time.put("MIN", curTimes[1]);
-                            send_time.put("SEC", curTimes[2]);
-                        }
+                        send_time.put("YEAR", curDates[0]);
+                        send_time.put("MON", curDates[1]);
+                        send_time.put("DAY", curDates[2]);
+                        send_time.put("HOUR", curTimes[0]);
+                        send_time.put("MIN", curTimes[1]);
+                        send_time.put("SEC", curTimes[2]);
                         send_object.put("TIME", send_time);
                         send_object.put("AIN", MApplication.getInstance().getAIN());
                         send_object.put("TRAN", uploadText);

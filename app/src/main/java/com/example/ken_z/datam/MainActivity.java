@@ -85,21 +85,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private GestureDetector gestureDetector;
 
     private boolean listenStatus = true;
-    private boolean ifToSendAudio = false;
-    private boolean ifToSendStart = false;
-    private boolean ifToSendStop = false;
+
     private DatagramSocket s_socket;
     private DatagramSocket r_socket;
     private DatagramSocket s_socket_heart;
-    private DatagramSocket s_socket_start;
-    private DatagramSocket s_socket_stop;
-    public int tries_start = 0;
-    public int tries_stop = 0;
+    private DatagramSocket s_socket_navigation;
 
-    private int[] startDate = new int[3];
-    private int[] startTime = new int[3];
-    private int[] stopDate = new int[3];
-    private int[] stopTime = new int[3];
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
 
@@ -107,8 +98,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private BNRoutePlanNode mBNRoutePlanNode = null;
     private List<BNRoutePlanNode> mBNRoutePlanNodes = new ArrayList<>();
     private BNRoutePlanNode mStartNode = null;
-
-    //private IBNRouteGuideManager mRouteGuideManager;
 
     //to launch another guide app
 
@@ -161,12 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         relativeLayout.setLongClickable(true);
         gestureDetector = new GestureDetector((GestureDetector.OnGestureListener)this);
 
-        //UDP threads: first for data receive, others for data send
+        //UDP threads: one for data receive, one for heart break. Only to receive data in MainActivity
 
         new UdpReceiveThread().start();
         new UdpHeartBeatThread().start();
-        new UdpStartThread().start();
-        new UdpStopThread().start();
 
         //gary  #D4D4D4
         //green #7FFF00
@@ -262,8 +249,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         r_socket.close();
         s_socket.close();
         s_socket_heart.close();
-        s_socket_start.close();
-        s_socket_stop.close();
+        s_socket_navigation.close();
     }
 
     @Override
@@ -308,11 +294,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 JSONObject send_object = new JSONObject();
                 send_object.put("CHK", "pandora");
                 send_object.put("ETT", 10);
-                send_object.put("LEN", "999999");
-//                JSONObject com_object = new JSONObject();
-//                com_object.put("REG", 1);
-//                com_object.put("BRK", 0);
-//                send_object.put("COM", com_object);
+                send_object.put("LEN", "60000");
+                int len = send_object.toString().getBytes().length;
+                String lenString = String.format("%05d", len);
+                send_object.put("LEN", lenString);
+
                 String send_content = send_object.toString();
 
                 DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
@@ -358,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                 int ETT = jsonObject_.getInt(" ETT");
                                 String LEN = jsonObject_.getString("LEN");
                                 try {
-                                    int len = Integer.parseInt(LEN);
+                                    int length = Integer.parseInt(LEN);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -479,13 +465,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                             break;
                                         case 42:
                                             //acknowledge of start information
-                                            ifToSendStart = false;
-                                            tries_start = 0;
+                                            EventBus.getDefault().post(new StartAckEvent(true));
                                             break;
                                         case 44:
                                             //acknowledge of end information
-                                            ifToSendStop = false;
-                                            tries_stop = 0;
+                                            EventBus.getDefault().post(new StopAckEvent(true));
                                             break;
                                         default:
                                             break;
@@ -496,14 +480,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                 e.printStackTrace();
                             }
 
-                            Log.d("AndroidUDP", "Data Length:" + dp_receive.getLength());
-
                             dp_receive.setLength(1024);
 
                             receiveHandler.sendEmptyMessage(1);
 
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(500);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -561,110 +543,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-    public class UdpStartThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                String ipValidation = Validation.validateIP(APP_IP);
-                Log.d("AndroidUDP", "IP:" + ipValidation);
-
-                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
-                s_socket_start = new DatagramSocket();
-                JSONObject send_object = new JSONObject();
-                send_object.put("CHK","pandora");
-                send_object.put("LEN","999999");
-                send_object.put("ETT",41);
-                JSONObject send_time = new JSONObject();
-                if (startTime.length == 3 && startDate.length == 3) {
-                    send_time.put("YEAR", startDate[0]);
-                    send_time.put("MON", startDate[1]);
-                    send_time.put("DAY", startDate[2]);
-                    send_time.put("HOUR", startTime[0]);
-                    send_time.put("MIN", startTime[1]);
-                    send_time.put("SEC", startTime[2]);
-                }
-                send_object.put("TIME", send_time);
-                send_object.put("VIN", MApplication.getInstance().getVIN());
-
-                String send_content = send_object.toString();
-                int len = send_content.getBytes().length;
-
-                DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
-                while (listenStatus) {
-                    while (ifToSendStart && tries_start < MAXNUM) {
-                        s_socket_start.send(dp_send_start);
-                        tries_start++;
-                        //send an start info package every 5 seconds
-                        try {
-                            Thread.sleep(5 * 1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                Log.d("AndroidUDP", e.getMessage());
-            }
-        }
-    }
-
-    public class UdpStopThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                String ipValidation = Validation.validateIP(APP_IP);
-                Log.d("AndroidUDP", "IP:" + ipValidation);
-
-                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
-                s_socket_stop = new DatagramSocket();
-                JSONObject send_object = new JSONObject();
-                send_object.put("CHK","pandora");
-                send_object.put("LEN","999999");
-                send_object.put("ETT",43);
-
-                JSONObject send_time = new JSONObject();
-                if (stopTime.length == 3 && stopDate.length == 3) {
-                    send_time.put("YEAR", stopDate[0]);
-                    send_time.put("MON", stopDate[1]);
-                    send_time.put("DAY", stopDate[2]);
-                    send_time.put("HOUR", stopTime[0]);
-                    send_time.put("MIN", stopTime[1]);
-                    send_time.put("SEC", stopTime[2]);
-                }
-                send_object.put("TIME", send_time);
-                send_object.put("VIN", MApplication.getInstance().getVIN());
-                String send_content = send_object.toString();
-
-                DatagramPacket dp_send_stop = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, 9992);
-                while (listenStatus) {
-                    while (ifToSendStop && tries_stop < MAXNUM) {
-                        s_socket_stop.send(dp_send_stop);
-                        tries_stop++;
-                        //send an stop info package every 5 seconds
-                        try {
-                            Thread.sleep(5 * 1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                Log.d("AndroidUDP", e.getMessage());
-            }
-        }
-    }
 
     private void buttonSetColor(Button bt, int cl) {
         if (cl == 0) {
@@ -757,62 +635,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onStartEventMainThread(StartEvent event) {
-        if (event != null) {
-            String sDate = event.getMsg_date();
-            String sTime = event.getMsg_time();
-            String sKM = event.getMsg_km();
-
-            String[] sDates = sDate.split("-");
-            String[] sTimes = sTime.split(":");
-            try {
-                int year = Integer.parseInt(sDates[0]);
-                int month = Integer.parseInt(sDates[1]);
-                int day = Integer.parseInt(sDates[2]);
-
-                int hour = Integer.parseInt(sTimes[0]);
-                int minute = Integer.parseInt(sTimes[1]);
-
-                startDate = new int[]{year, month, day};
-                startTime = new int[]{hour, minute, 0};
-                ifToSendStart = true;
-                tries_start = 0;
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onStopEventMainThread(StartEvent event) {
-        if (event != null) {
-            String sDate = event.getMsg_date();
-            String sTime = event.getMsg_time();
-            String sKM = event.getMsg_km();
-
-            String[] sDates = sDate.split("-");
-            String[] sTimes = sTime.split(":");
-            try {
-                int year = Integer.parseInt(sDates[0]);
-                int month = Integer.parseInt(sDates[1]);
-                int day = Integer.parseInt(sDates[2]);
-
-                int hour = Integer.parseInt(sTimes[0]);
-                int minute = Integer.parseInt(sTimes[1]);
-
-                stopDate = new int[]{year, month, day};
-                stopTime = new int[]{hour, minute, 0};
-                ifToSendStop = true;
-                tries_stop = 0;
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 
     private void voiceWarning(int level) {
