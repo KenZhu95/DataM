@@ -80,8 +80,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
     private Button[] buttons;
-    private Button buttonPermission;
-    private Button buttonLogin, buttonSpeech;
+    private Button buttonLogin, buttonLogoff, buttonSpeech, buttonPermission;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
 
@@ -95,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     boolean ifToSendNavStartAck = false;
     boolean ifToSendNavAbortAck = false;
     boolean ifToSendNavFinishAck = false;
+    boolean ifToSendBreak = false;
 
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         buttonPermission = findViewById(R.id.button_permission);
         buttonLogin =  findViewById(R.id.button_login);
+        buttonLogoff = findViewById(R.id.button_logoff);
         buttonSpeech = findViewById(R.id.button_speech);
 
         relativeLayout.setOnTouchListener(this);
@@ -160,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         new UdpReceiveThread().start();
         new UdpHeartBeatThread().start();
         new UdpNavigationThread().start();
+        new UdpBreakThread().start();
 
         //gary  #D4D4D4
         //green #7FFF00
@@ -175,6 +177,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onClick(View v) {
                 startLogin();
+            }
+        });
+        buttonLogoff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startLogoff();
             }
         });
         buttonSpeech.setOnClickListener(new View.OnClickListener() {
@@ -229,6 +237,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private void startLogin() {
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
+    }
+
+    private void startLogoff() {
+        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
         startActivity(intent);
     }
 
@@ -340,10 +353,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                             dp_receive.getData();
 
                             String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
-
                             JSONObject jsonObject_;
-
                             jsonObject_ = new JSONObject(rev_log_);
+
                             try {
                                 String chk = jsonObject_.getString("CHK");
                                 int ETT = jsonObject_.getInt(" ETT");
@@ -604,12 +616,61 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         s_socket_navigation.send(dp_send_start);
                         ifToSendNavFinishAck = false;
                     }
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
 
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.d("AndroidUDP", e.getMessage());
+            }
+        }
+    }
+
+    public class UdpBreakThread extends Thread {
+        @Override
+        public void run() {
+            try {
+                String ipValidation = Validation.validateIP(APP_IP);
+                Log.d("AndroidUDP", "IP:" + ipValidation);
+
+                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
+                s_socket_heart = new DatagramSocket();
+                JSONObject send_object = new JSONObject();
+                send_object.put("CHK", "pandora");
+                send_object.put("LEN", "99999");
+                send_object.put("ETT", 11);
                 int len = send_object.toString().getBytes().length;
                 String lenString = String.format("%05d", len);
                 send_object.put("LEN", lenString);
 
+                String send_content = send_object.toString();
+                DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+                while (listenStatus) {
+                    if (ifToSendBreak) {
+                        s_socket_heart.send(dp_send_heart);
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        MApplication.getInstance().exit();
+                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             } catch (SocketException e) {
@@ -890,8 +951,31 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
-        startActivity(intent);
+//        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
+//        startActivity(intent);
+        mOffTextView = new TextView(this);
+        mDialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("退出程序")
+                .setCancelable(false)
+                .setView(mOffTextView)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ifToSendBreak = true;
+                        Toast.makeText(MainActivity.this, "退出程序", Toast.LENGTH_LONG).show();
+                        //off();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mDialog.dismiss();
+                    }
+                })
+                .create();
+        mDialog.show();
+        mDialog.setCanceledOnTouchOutside(false);
+
     }
 
 }

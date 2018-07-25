@@ -5,6 +5,15 @@ android:layout_height="match_parent"
     android:id="@+id/relative_main">
 
     <Button
+        android:id="@+id/button_logoff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/button_speech"
+        android:layout_alignTop="@+id/button_login"
+        android:text="Logoff"
+        android:textSize="20sp" />
+
+    <Button
     android:id="@+id/button1"
     android:layout_width="125dp"
     android:layout_height="77dp"
@@ -99,8 +108,9 @@ android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="103dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="101dp"
+        android:layout_marginStart="34dp"
         android:text="Permission"
         android:textSize="20sp" />
 
@@ -109,21 +119,21 @@ android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="35dp"
-        android:layout_marginLeft="72dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="32dp"
+        android:layout_marginStart="60dp"
         android:text="Login"
-        android:textSize="20sp"/>
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/button_speech"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/button_login"
-        android:layout_marginRight="72dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@+id/button_permission"
+        android:layout_marginEnd="67dp"
         android:text="Speech"
-        android:textSize="20sp"/>
+        android:textSize="20sp" />
 
 
 </RelativeLayout>

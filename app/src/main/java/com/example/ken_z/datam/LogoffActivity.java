@@ -222,7 +222,7 @@ public class LogoffActivity extends AppCompatActivity {
                         }
                     }
                     if (tries_stop >= MAXNUM) {
-                        Toast.makeText(LogoffActivity.this, "开始测试信息发送失败", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LogoffActivity.this, "结束测试信息发送失败", Toast.LENGTH_LONG).show();
                     }
                     if (ifAckStop) {
                         try {
@@ -231,7 +231,8 @@ public class LogoffActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                         //LogoffActivity.super.onBackPressed();
-                        MApplication.getInstance().exit();
+                        //MApplication.getInstance().exit();
+                        Toast.makeText(LogoffActivity.this, "测试结束信息发送成功", Toast.LENGTH_LONG).show();
                     }
                 }
             } catch (UnknownHostException e) {
