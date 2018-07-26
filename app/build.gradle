@@ -61,7 +61,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.android.support:multidex:1.0.3'
     implementation files('libs/BaiduLBS_Android.jar')
-    //implementation files('libs/IndoorscapeAlbumPlugin.jar')
     implementation project(':NaviTts')
     implementation project(':onsdk_all')
     implementation files('libs/httpmime-4.1.2.jar')
@@ -69,10 +68,8 @@ dependencies {
     implementation files('libs/EventBus.jar')
     implementation files('libs/intellij_annotations.jar')
     implementation files('libs/galaxy_lite.jar')
-    //implementation files('libs/galaxy_lite_lbs_v2.0.jar')
     implementation files('libs/org.apache.http.legacy.jar')
     implementation files('libs/protobuf-java-2.3.0-micro.jar')
-    //implementation files('libs/lbsCoreSDK.jar')
     implementation files('libs/javapoet-1.9.0.jar')
     implementation files('libs/Msc.jar')
     implementation files('libs/Sunflower.jar')

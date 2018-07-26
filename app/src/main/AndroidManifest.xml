@@ -57,8 +57,6 @@
         <activity
             android:name=".MapActivity" />
         <activity
-            android:name=".GuideActivity" />
-        <activity
             android:name=".DemoNaviSettingActivity" />
         <activity
             android:name=".ShowActivity" />

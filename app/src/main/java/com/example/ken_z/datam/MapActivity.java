@@ -150,13 +150,13 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-        button_navi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //startNavigation();
-                createDialog();
-            }
-        });
+//        button_navi.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                //startNavigation();
+//                createDialog();
+//            }
+//        });
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -168,9 +168,6 @@ public class MapActivity extends AppCompatActivity {
         initSlidr();
         initLocation();
         initNavigation();
-
-        //Event Bus register
-        EventBus.getDefault().register(this);
 
     }
 
@@ -195,6 +192,7 @@ public class MapActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        EventBus.getDefault().register(this);
         mBaiduMap.setMyLocationEnabled(true);
         if (!locationClient.isStarted()) {
             locationClient.start();
@@ -204,6 +202,7 @@ public class MapActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        EventBus.getDefault().unregister(this);
         super.onStop();
         mBaiduMap.setMyLocationEnabled(false);
             locationClient.stop();

@@ -115,8 +115,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private double[] latitudes;
     private double[] longitudes;
 
-    private RandomAccessFile accessFile = null;
-    private byte[] translationData;
 
     class ReceiveHandler extends Handler {
         @Override
@@ -162,10 +160,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         new UdpHeartBeatThread().start();
         new UdpNavigationThread().start();
         new UdpBreakThread().start();
-
-        //gary  #D4D4D4
-        //green #7FFF00
-        //red   #FF4500
 
         buttonPermission.setOnClickListener(new View.OnClickListener() {
             @Override
