@@ -38,6 +38,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.DatagramPacket;
@@ -45,6 +46,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -55,7 +59,8 @@ import de.greenrobot.event.EventBus;
 public class SpeechActivity extends Activity implements View.OnClickListener {
 
     public static final String PREFER_NAME = "com.iflytek.setting";
-    private static final String APP_IP = "192.168.8.99";
+    //private static final String APP_IP = "192.168.8.99";
+    private static final String APP_IP = "10.111.10.111";
     private static final int SERVER_RECEIVE_PORT = 9992;
     private static String TAG = SpeechActivity.class.getSimpleName();
     // 语音听写对象
@@ -602,10 +607,20 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         int lastLen = rem == 0 ? MAXBYTES : rem;
                         int totalNumbers = quo + (rem == 0 ? 0 : 1);
                         send_object.put("TOT", totalNumbers);
+                        String NEW_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/ita.wav";
+                        FileOutputStream fs = new FileOutputStream(NEW_FILE_PATH);
                         for (int index = 1; index < totalNumbers; ++index ) {
                             send_object.put("INDEX", index);
                             byte[] bs = new byte[MAXBYTES];
                             System.arraycopy(translationData, MAXBYTES * (index-1), bs, 0, MAXBYTES);
+//                            Charset cs = Charset.forName("UTF-8");
+//                            ByteBuffer bb = ByteBuffer.allocate(bs.length);
+//                            bb.put(bs);
+//                            bb.flip();
+//                            CharBuffer cb = cs.decode(bb);
+//                            char[] chs = cb.array();
+//                            //String bS = chs.toString();
+//                            String bS = String.valueOf(chs);
                             String bS = Base64.encodeToString(bs, Base64.DEFAULT);
                             send_object.put("AUDIO", bS);
                             int len = send_object.toString().getBytes().length;
@@ -614,11 +629,24 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                             String send_content = send_object.toString();
                             DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                             s_socket_audio.send(dp_send_audio);
+
+                            //String bSS = send_object.getString("AUDIO");
+                            //byte[] bss = Base64.decode(bSS, Base64.DEFAULT);
+                            fs.write(bs);
+
                         }
                         send_object.put("INDEX", totalNumbers);
                         byte[] bs = new byte[lastLen];
                         System.arraycopy(translationData, MAXBYTES * (totalNumbers - 1), bs, 0, lastLen);
                         String bS = Base64.encodeToString(bs, Base64.DEFAULT);
+//                        Charset cs = Charset.forName("UTF-8");
+//                        ByteBuffer bb = ByteBuffer.allocate(bs.length);
+//                        bb.put(bs);
+//                        bb.flip();
+//                        CharBuffer cb = cs.decode(bb);
+//                        char[] chs = cb.array();
+                        //String bS = chs.toString();
+                        //String bS = String.valueOf(chs);
                         send_object.put("AUDIO", bS);
                         int len = send_object.toString().getBytes().length;
                         String lenString = String.format("%05d", len);
@@ -628,7 +656,15 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                         s_socket_audio.send(dp_send_audio);
 
+                        //String bSS = send_object.getString("AUDIO");
+                        //byte[] bss = Base64.decode(bSS, Base64.DEFAULT);
+
+                        fs.write(bs);
+                        fs.flush();
+                        fs.close();
+
                         tries_audio++;
+
                         //send a series of audio packages every 5 seconds
                         try {
                             Thread.sleep(5 * 1000);

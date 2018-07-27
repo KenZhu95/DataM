@@ -230,8 +230,6 @@ public class LogoffActivity extends AppCompatActivity {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        //LogoffActivity.super.onBackPressed();
-                        //MApplication.getInstance().exit();
                         Toast.makeText(LogoffActivity.this, "测试结束信息发送成功", Toast.LENGTH_LONG).show();
                     }
                 }

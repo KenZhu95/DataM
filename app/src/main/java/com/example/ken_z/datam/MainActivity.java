@@ -68,7 +68,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private static final String TAG = MainActivity.class.getName();
 
     //private static final String APP_IP = "10.110.110.188";
-    private static final String APP_IP = "192.168.8.99";
+    //private static final String APP_IP = "192.168.8.99";
+    private static final String APP_IP = "10.111.10.111";
     private static final int APP_PORT = 9980;
     private static final int SERVER_RECEIVE_PORT = 9992;
 
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
     private Button[] buttons;
-    private Button buttonLogin, buttonLogoff, buttonSpeech, buttonPermission;
+    private Button buttonSpeech, buttonPermission;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
 
@@ -146,8 +147,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         button9 = findViewById(R.id.button9);
 
         buttonPermission = findViewById(R.id.button_permission);
-        buttonLogin =  findViewById(R.id.button_login);
-        buttonLogoff = findViewById(R.id.button_logoff);
+//        buttonLogin =  findViewById(R.id.button_login);
+//        buttonLogoff = findViewById(R.id.button_logoff);
         buttonSpeech = findViewById(R.id.button_speech);
 
         relativeLayout.setOnTouchListener(this);
@@ -167,18 +168,18 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startLocation();
             }
         });
-        buttonLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startLogin();
-            }
-        });
-        buttonLogoff.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startLogoff();
-            }
-        });
+//        buttonLogin.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startLogin();
+//            }
+//        });
+//        buttonLogoff.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startLogoff();
+//            }
+//        });
         buttonSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -229,15 +230,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         startActivity(intent);
     }
 
-    private void startLogin() {
-        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-        startActivity(intent);
-    }
-
-    private void startLogoff() {
-        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
-        startActivity(intent);
-    }
+//    private void startLogin() {
+//        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+//        startActivity(intent);
+//    }
+//
+//    private void startLogoff() {
+//        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
+//        startActivity(intent);
+//    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -344,7 +345,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     if (receivedResponse) {
                         while (listenStatus) {
                             r_socket.receive(dp_receive);
-                            dp_receive.getData();
+                            //dp_receive.getData();
 
                             String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
                             JSONObject jsonObject_;
@@ -352,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                             try {
                                 String chk = jsonObject_.getString("CHK");
-                                int ETT = jsonObject_.getInt(" ETT");
+                                int ETT = jsonObject_.getInt("ETT");
                                 String LEN = jsonObject_.getString("LEN");
                                 try {
                                     int length = Integer.parseInt(LEN);
@@ -453,6 +454,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                                     latis[i] = lati;
                                                 }
                                                 GPSEvent gpsEvent = new GPSEvent(latis, longis);
+                                                EventBus.getDefault().post(gpsEvent);
 
                                             } catch (Exception e) {
                                                 e.printStackTrace();
@@ -475,14 +477,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                                 e.printStackTrace();
                                             }
                                             break;
-                                        case 42:
-                                            //acknowledge of start information
-                                            EventBus.getDefault().post(new StartAckEvent(true));
-                                            break;
-                                        case 44:
-                                            //acknowledge of end information
-                                            EventBus.getDefault().post(new StopAckEvent(true));
-                                            break;
+//                                        case 42:
+//                                            //acknowledge of start information
+//                                            EventBus.getDefault().post(new StartAckEvent(true));
+//                                            break;
+//                                        case 44:
+//                                            //acknowledge of end information
+//                                            EventBus.getDefault().post(new StopAckEvent(true));
+//                                            break;
                                         default:
                                             break;
                                     }
@@ -755,7 +757,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onGPSEventMainThread(GPSEvent event) {
+    public void onEventMainThread(GPSEvent event) {
         if (event != null) {
             longitudes = event.getMsglong();
             latitudes = event.getMsgLati();
@@ -770,7 +772,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onNavAbortEventMainThread(NavAbortEvent event) {
+    public void onEventMainThread(NavAbortEvent event) {
         if (event != null) {
             boolean abort = event.isMsg_abort();
             if (abort) {
