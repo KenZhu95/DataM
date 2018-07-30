@@ -3,6 +3,7 @@ package com.example.ken_z.datam;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -63,6 +64,7 @@ import static com.example.ken_z.datam.BeeAndVibrateManager.playBeeAndVibrate;
 import static com.example.ken_z.datam.BeeAndVibrateManager.playWarnAndVibrate;
 import static com.example.ken_z.datam.MapActivity.ROUTE_PLAN_NODE;
 import static com.example.ken_z.datam.MapActivity.ROUTE_PLAN_NODES;
+import static com.example.ken_z.datam.MapActivity.NAV_ABORT;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener, GestureDetector.OnGestureListener {
     private static final String TAG = MainActivity.class.getName();
@@ -80,8 +82,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
 
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
-    private Button[] buttons;
-    private Button buttonSpeech, buttonPermission;
+    //private Button[] buttons;
+    private Button buttonSpeech, buttonPermission, buttonFinish;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
 
@@ -150,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 //        buttonLogin =  findViewById(R.id.button_login);
 //        buttonLogoff = findViewById(R.id.button_logoff);
         buttonSpeech = findViewById(R.id.button_speech);
+        buttonFinish = findViewById(R.id.button_finish);
 
         relativeLayout.setOnTouchListener(this);
         relativeLayout.setLongClickable(true);
@@ -186,12 +189,18 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startSpeech();
             }
         });
-//        button1.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                createDialog();
-//            }
-//        });
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ifToSendNavAbortAck = true;
+            }
+        });
+        buttonFinish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startFinish();
+            }
+        });
 
     }
 
@@ -228,6 +237,32 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private void startSpeech() {
         Intent intent = new Intent(MainActivity.this, SpeechActivity.class);
         startActivity(intent);
+    }
+
+    private void startFinish() {
+        mOffTextView = new TextView(this);
+        mDialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("确认导航完成")
+                .setCancelable(false)
+                .setView(mOffTextView)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ifToSendNavFinishAck = true;
+                        Toast.makeText(MainActivity.this, "导航完成", Toast.LENGTH_LONG).show();
+
+                        //off();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mDialog.dismiss();
+                    }
+                })
+                .create();
+        mDialog.show();
+        mDialog.setCanceledOnTouchOutside(false);
     }
 
 //    private void startLogin() {
@@ -462,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                             break;
                                         case 23:
                                             //notify cancellation of navigation
-                                            EventBus.getDefault().post(new NavAbortEvent(true));
+                                            EventBus.getDefault().postSticky(new NavAbortEvent(true));
                                             break;
                                         case 31:
                                             //acknowledge for audio tag
@@ -597,6 +632,27 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
 
                         s_socket_navigation.send(dp_send_start);
+
+                        PackageManager packageManager = getPackageManager();
+                        if (isApkInstalled(getApplicationContext(),GUIDE_APP_NAME)) {
+                            //Intent intent = packageManager.getLaunchIntentForPackage(GUIDE_APP_NAME);
+                            Intent intent = new Intent();
+                            ComponentName cn = new ComponentName(GUIDE_APP_NAME, GUIDE_APP_NAME + ".GuideActivity");
+                            try {
+                                intent.setComponent(cn);
+                                Bundle bundle = new Bundle();
+                                bundle.putInt(NAV_ABORT, 1);
+                                intent.putExtras(bundle);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            } catch (Exception e) {
+
+                            }
+
+                        } else {
+                            Toast.makeText(MainActivity.this, "Not Installed" + GUIDE_APP_NAME, Toast.LENGTH_LONG).show();
+                        }
+
                         ifToSendNavAbortAck = false;
                     }
 
@@ -610,6 +666,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
 
                         s_socket_navigation.send(dp_send_start);
+
                         ifToSendNavFinishAck = false;
                     }
 
@@ -771,7 +828,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onEventMainThread(NavAbortEvent event) {
         if (event != null) {
             boolean abort = event.isMsg_abort();
@@ -818,17 +875,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mOffTimer.cancel();
+                        ifToSendNavStartAck = true;
                         launchGuide();
-                        //off();
                     }
                 })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                        mOffTimer.cancel();
-                    }
-                })
+//                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.cancel();
+//                        mOffTimer.cancel();
+//                    }
+//                })
                 .create();
         mDialog.show();
         mDialog.setCanceledOnTouchOutside(false);
@@ -843,9 +900,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 } else {
                     if (mDialog != null) {
                         mDialog.dismiss();
+                        ifToSendNavStartAck = true;
                         launchGuide();
                     }
-                    //off();
                     mOffTimer.cancel();
                 }
                 super.handleMessage(msg);
@@ -913,7 +970,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         //count down timer
         mOffTimer = new Timer(true);
         TimerTask tt = new TimerTask() {
-            int countTime = 10;
+            int countTime = 5;
             @Override
             public void run() {
                 if (countTime > 0) {
@@ -937,6 +994,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             Bundle bundle = new Bundle();
             bundle.putSerializable(ROUTE_PLAN_NODE, mStartNode);
             bundle.putSerializable(ROUTE_PLAN_NODES, (Serializable) mBNRoutePlanNodes);
+            bundle.putInt(NAV_ABORT, 0);
             intent.putExtras(bundle);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);

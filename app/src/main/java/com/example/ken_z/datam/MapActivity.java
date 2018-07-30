@@ -81,6 +81,7 @@ public class MapActivity extends AppCompatActivity {
 
     static final String ROUTE_PLAN_NODE = "routePlanNode";
     static final String ROUTE_PLAN_NODES = "routePlanNodes";
+    static final String NAV_ABORT = "navigationAbort";
     private static final String APP_FOLDER_NAME = "datam";
     private static final String GUIDE_APP_NAME = "com.example.ken_z.datag";
 
@@ -400,6 +401,7 @@ public class MapActivity extends AppCompatActivity {
         if (isApkInstalled(getApplicationContext(),GUIDE_APP_NAME)) {
             Intent intent = packageManager.getLaunchIntentForPackage(GUIDE_APP_NAME);
             Bundle bundle = new Bundle();
+            bundle.putInt(NAV_ABORT, 0);
             bundle.putSerializable(ROUTE_PLAN_NODE, mStartNode);
             bundle.putSerializable(ROUTE_PLAN_NODES, (Serializable) list);
             intent.putExtras(bundle);

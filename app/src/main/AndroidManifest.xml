@@ -46,7 +46,7 @@
 
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -55,13 +55,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MapActivity" />
+            android:name=".MapActivity"
+            android:launchMode="singleTask"/>
         <activity
             android:name=".DemoNaviSettingActivity" />
         <activity
-            android:name=".ShowActivity" />
+            android:name=".ShowActivity"
+            android:launchMode="singleTask"/>
         <activity
             android:name=".SpeechActivity"
+            android:launchMode="singleTask"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
             android:screenOrientation="portrait" />
         <activity
