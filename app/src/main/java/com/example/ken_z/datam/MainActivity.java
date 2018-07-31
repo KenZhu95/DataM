@@ -75,9 +75,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private static final int APP_PORT = 9980;
     private static final int SERVER_RECEIVE_PORT = 9992;
 
-    private static final int MAXNUM = 10;
-    private static final int REVNUM = 12;
+//    private static final int MAXNUM = 10;
+//    private static final int REVNUM = 12;
     private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT_BREAK = 15000;
     private static final String GUIDE_APP_NAME = "com.example.ken_z.datag";
 
 
@@ -89,15 +90,18 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private boolean listenStatus = true;
 
-    private DatagramSocket s_socket;
     private DatagramSocket r_socket;
+    private DatagramSocket s_socket_connect;
     private DatagramSocket s_socket_heart;
     private DatagramSocket s_socket_navigation;
+    private DatagramSocket s_socket_break;
 
     boolean ifToSendNavStartAck = false;
     boolean ifToSendNavAbortAck = false;
     boolean ifToSendNavFinishAck = false;
     boolean ifToSendBreak = false;
+    boolean ifToSendConnect = true;
+    boolean ifToReceive = false;
 
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
@@ -149,8 +153,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         button9 = findViewById(R.id.button9);
 
         buttonPermission = findViewById(R.id.button_permission);
-//        buttonLogin =  findViewById(R.id.button_login);
-//        buttonLogoff = findViewById(R.id.button_logoff);
         buttonSpeech = findViewById(R.id.button_speech);
         buttonFinish = findViewById(R.id.button_finish);
 
@@ -161,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         //UDP threads: one for data receive, one for heart break. Only to receive data in MainActivity
 
         new UdpReceiveThread().start();
+        new UdpConnectThread().start();
         new UdpHeartBeatThread().start();
         new UdpNavigationThread().start();
         new UdpBreakThread().start();
@@ -171,30 +174,21 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startLocation();
             }
         });
-//        buttonLogin.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                startLogin();
-//            }
-//        });
-//        buttonLogoff.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                startLogoff();
-//            }
-//        });
+
         buttonSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startSpeech();
             }
         });
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ifToSendNavAbortAck = true;
-            }
-        });
+
+//        button1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                //listenStatus = !listenStatus;
+//            }
+//        });
+
         buttonFinish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -265,16 +259,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mDialog.setCanceledOnTouchOutside(false);
     }
 
-//    private void startLogin() {
-//        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-//        startActivity(intent);
-//    }
-//
-//    private void startLogoff() {
-//        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
-//        startActivity(intent);
-//    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
@@ -295,9 +279,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         listenStatus = false;
         //close all UDP sockets
         r_socket.close();
-        s_socket.close();
+        s_socket_connect.close();
         s_socket_heart.close();
         s_socket_navigation.close();
+        s_socket_break.close();
     }
 
     @Override
@@ -325,62 +310,250 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     }
 
+//    public class UdpReceiveThread extends Thread {
+//        @Override
+//        public void run() {
+//            byte[] buf = new byte[1024];
+//
+//            try {
+//                String ipValidation = Validation.validateIP(APP_IP);
+//                Log.d("AndroidUDP", "IP:" + ipValidation);
+//
+//                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
+//                s_socket = new DatagramSocket();
+//                r_socket = new DatagramSocket(APP_PORT);
+//
+//                JSONObject send_object = new JSONObject();
+//                send_object.put("CHK", "pandora");
+//                send_object.put("ETT", 10);
+//                send_object.put("LEN", "60000");
+//                int len = send_object.toString().getBytes().length;
+//                String lenString = String.format("%05d", len);
+//                send_object.put("LEN", lenString);
+//
+//                String send_content = send_object.toString();
+//
+//                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+//                DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
+//                r_socket.setSoTimeout(TIMEOUT);
+//                int tries = 0;
+//                boolean receivedResponse = false;
+//                //while (!receivedResponse && tries < MAXNUM) {
+//                while (!receivedResponse) {
+//                    Log.d("AndroidUDP", "Wait send.");
+//                    try {
+//                        s_socket.send(dp_send);
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        Log.d("AndroidUDP", "" + e.getMessage());
+//                    }
+////                    s_socket.close();
+//                    Log.d("AndroidUDP", "Send Check.");
+//
+//                    try {
+//                        r_socket.receive(dp_receive);
+//                        if (!dp_receive.getAddress().equals(APP_ADD)) {
+//                            throw new IOException("Received packet from an unknown source");
+//                        }
+//                        receivedResponse = true;
+//                        Log.d("AndroidUDP", "Received.");
+//                    } catch (Exception e) {
+//                        tries += 1;
+//                        Log.d("AndroidUDP", "Time out," + (MAXNUM - tries) + " more tries...");
+//                    }
+//
+//                    if (receivedResponse) {
+//                        while (listenStatus) {
+//                            r_socket.receive(dp_receive);
+//                            //dp_receive.getData();
+//
+//                            String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
+//                            JSONObject jsonObject_;
+//                            jsonObject_ = new JSONObject(rev_log_);
+//
+//                            try {
+//                                String chk = jsonObject_.getString("CHK");
+//                                int ETT = jsonObject_.getInt("ETT");
+//                                String LEN = jsonObject_.getString("LEN");
+//                                try {
+//                                    int length = Integer.parseInt(LEN);
+//                                } catch (Exception e) {
+//                                    e.printStackTrace();
+//                                }
+//
+//                                if (chk.equals("pandora")) {
+//                                    switch (ETT) {
+//                                        case 20 :
+//                                            try {
+//
+//                                                JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
+//                                                JSONObject jsonObjectHMI = jsonObject_.getJSONObject("HMI"); //BMi info
+//                                                JSONObject jsonObjectSTS = jsonObject_.getJSONObject("STS"); //states info
+//                                                JSONObject jsonObjectPOS = jsonObject_.getJSONObject("POS"); //position (GPS) info
+//                                                JSONObject jsonObjectALT = jsonObject_.getJSONObject("ALT"); // alert info
+//
+//                                                //time info
+//                                                int year = jsonObjectTIME.getInt("YEAR");
+//                                                int month = jsonObjectTIME.getInt("MON");
+//                                                int day = jsonObjectTIME.getInt("DAY");
+//                                                int hour = jsonObjectTIME.getInt("HOUR");
+//                                                int minute = jsonObjectTIME.getInt("MIN");
+//                                                int second = jsonObjectTIME.getInt("SEC");
+//
+//                                                //HMI info
+//                                                JSONObject jsonObjectHLB = jsonObjectHMI.getJSONObject("HLB");
+//                                                JSONObject jsonObjectACC = jsonObjectHMI.getJSONObject("ACC");
+//                                                //HLB info
+//                                                int HDM = jsonObjectHLB.getInt("HDM");
+//                                                int LDWL = jsonObjectHLB.getInt("LDWL");
+//                                                int LDWR = jsonObjectHLB.getInt("LDWR");
+//                                                int BSDL = jsonObjectHLB.getInt("BSDL");
+//                                                int BSDR = jsonObjectHLB.getInt("BSDR");
+//                                                //ACC info
+//                                                int DIS = jsonObjectACC.getInt("DIS");
+//                                                int GAP = jsonObjectACC.getInt("GAP");
+//                                                int TGT = jsonObjectACC.getInt("TGT");
+//                                                int APL = jsonObjectACC.getInt("APL");
+//                                                int BKP = jsonObjectACC.getInt("BKP");
+//                                                int TAG = jsonObjectACC.getInt("ATV"); //validation of DIS index number (1: valid-white 0:invalid-grey)
+//                                                //int TAG = 1;
+//                                                //STS info
+//                                                int VIDEO = jsonObjectSTS.getInt("VIDEO");
+//                                                int ETH = jsonObjectSTS.getInt("ETH");
+//                                                int CAN = jsonObjectSTS.getInt("CAN");
+//                                                int GPS = jsonObjectSTS.getInt("GPS");
+//                                                int SVC = jsonObjectSTS.getInt("SVC");
+//                                                int LIDAR = jsonObjectSTS.getInt("LIDAR");
+//                                                int AFE = jsonObjectSTS.getInt("AFE");
+//                                                int AIO = jsonObjectSTS.getInt("AIO");
+//                                                int EQM = jsonObjectSTS.getInt("EQM");
+//
+//                                                //Position info
+//                                                double LON = jsonObjectPOS.getDouble("LON");
+//                                                double LAT = jsonObjectPOS.getDouble("LAT");
+//
+//                                                //alert info
+//                                                int LVL = jsonObjectALT.getInt("LVL");
+//                                                int CNT = jsonObjectALT.getInt("CNT");
+//
+//                                                int[] post_show = new int[]{HDM, LDWL, LDWR, BSDL, BSDR, DIS, GAP, TGT, APL, BKP, TAG};
+//                                                int[] post_alert = new int[]{LVL, CNT};
+//                                                double[] post_gps = new double[]{LON, LAT};
+//                                                int[] post_time = new int[]{year, month, day, hour, minute, second};
+//
+//                                                EventBus.getDefault().post(new SendEvent(new int[]{VIDEO, ETH, CAN, GPS, SVC, LIDAR, AFE, AIO, EQM}, post_alert));
+//                                                EventBus.getDefault().post(new GuideEvent(new int[]{VIDEO, ETH, CAN, GPS, SVC, LIDAR, AFE, AIO, EQM}, post_alert, post_gps));
+//                                                EventBus.getDefault().post(new ShowEvent(post_show, post_alert));
+//                                                //EventBus.getDefault().post(new AlertEvent(post_alert));
+//                                            } catch (Exception e) {
+//                                                e.printStackTrace();
+//                                            }
+//                                            break;
+//                                        case 21:
+//                                            try {
+//                                                JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
+//                                                JSONArray jsonArrayPATH = jsonObject_.getJSONArray("PATH"); //path info (points GPS)
+//
+//                                                //time info
+//                                                int year = jsonObjectTIME.getInt("YEAR");
+//                                                int month = jsonObjectTIME.getInt("MON");
+//                                                int day = jsonObjectTIME.getInt("DAY");
+//                                                int hour = jsonObjectTIME.getInt("HOUR");
+//                                                int minute = jsonObjectTIME.getInt("MIN");
+//                                                int second = jsonObjectTIME.getInt("SEC");
+//
+//                                                //path (GPS) info
+//                                                int size = jsonArrayPATH.length();
+//                                                double[] longis = new double[size];
+//                                                double[] latis = new double[size];
+//                                                for (int i = 0; i < size; i++) {
+//                                                    JSONObject path = jsonArrayPATH.getJSONObject(i);
+//                                                    double longi = path.getDouble("LON");
+//                                                    double lati = path.getDouble("LAT");
+//                                                    longis[i] = longi;
+//                                                    latis[i] = lati;
+//                                                }
+//                                                GPSEvent gpsEvent = new GPSEvent(latis, longis);
+//                                                EventBus.getDefault().post(gpsEvent);
+//
+//                                            } catch (Exception e) {
+//                                                e.printStackTrace();
+//                                            }
+//                                            break;
+//                                        case 23:
+//                                            //notify cancellation of navigation
+//                                            EventBus.getDefault().postSticky(new NavAbortEvent(true));
+//                                            break;
+//                                        case 31:
+//                                            //acknowledge for audio tag
+//                                            EventBus.getDefault().post(new SpeechAckEvent(true));
+//                                            break;
+//                                        case 40:
+//                                            try {
+//                                                String VIN = jsonObject_.getString("VIN");
+//                                                //give this VIN to MApplication instance
+//                                                MApplication.getInstance().setVIN(VIN);
+//                                            } catch (Exception e) {
+//                                                e.printStackTrace();
+//                                            }
+//                                            break;
+//                                        default:
+//                                            break;
+//                                    }
+//
+//                                }
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//
+//                            dp_receive.setLength(1024);
+//
+//                            receiveHandler.sendEmptyMessage(1);
+//
+////                            try {
+////                                Thread.sleep(500);
+////                            } catch (InterruptedException e) {
+////                                e.printStackTrace();
+////                            }
+//                        }
+//                    } else {
+//                    }
+//                }
+//            } catch (UnknownHostException e) {
+//                e.printStackTrace();
+//            } catch (SocketException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (Exception e) {
+//                Log.d("AndroidUDP", e.getMessage());
+//            }
+//        }
+//    }
 
     public class UdpReceiveThread extends Thread {
         @Override
         public void run() {
-            byte[] buf = new byte[1024];
-
             try {
+                byte[] buf = new byte[1024];
                 String ipValidation = Validation.validateIP(APP_IP);
                 Log.d("AndroidUDP", "IP:" + ipValidation);
-
                 InetAddress APP_ADD = InetAddress.getByName(APP_IP);
-                s_socket = new DatagramSocket();
-                r_socket = new DatagramSocket(APP_PORT);
 
-                JSONObject send_object = new JSONObject();
-                send_object.put("CHK", "pandora");
-                send_object.put("ETT", 10);
-                send_object.put("LEN", "60000");
-                int len = send_object.toString().getBytes().length;
-                String lenString = String.format("%05d", len);
-                send_object.put("LEN", lenString);
-
-                String send_content = send_object.toString();
-
-                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
-                r_socket.setSoTimeout(TIMEOUT);
-                int tries = 0;
-                boolean receivedResponse = false;
-                while (!receivedResponse && tries < MAXNUM) {
-                    Log.d("AndroidUDP", "Wait send.");
-                    try {
-                        s_socket.send(dp_send);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Log.d("AndroidUDP", "" + e.getMessage());
-                    }
-//                    s_socket.close();
-                    Log.d("AndroidUDP", "Send Check.");
 
-                    try {
-                        r_socket.receive(dp_receive);
-                        if (!dp_receive.getAddress().equals(APP_ADD)) {
-                            throw new IOException("Received packet from an unknown source");
-                        }
-                        receivedResponse = true;
-                        Log.d("AndroidUDP", "Received.");
-                    } catch (Exception e) {
-                        tries += 1;
-                        Log.d("AndroidUDP", "Time out," + (MAXNUM - tries) + " more tries...");
-                    }
 
-                    if (receivedResponse) {
-                        while (listenStatus) {
+
+                while (listenStatus) {
+                    while (ifToReceive) {
+                        //r_socket = new DatagramSocket(APP_PORT);
+                        r_socket.setSoTimeout(TIMEOUT_BREAK);
+                        try {
                             r_socket.receive(dp_receive);
-                            //dp_receive.getData();
+                            if (!dp_receive.getAddress().equals(APP_ADD)) {
+                                throw new IOException("Received packet from an unknown source");
+                            }
+
 
                             String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
                             JSONObject jsonObject_;
@@ -512,18 +685,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                                 e.printStackTrace();
                                             }
                                             break;
-//                                        case 42:
-//                                            //acknowledge of start information
-//                                            EventBus.getDefault().post(new StartAckEvent(true));
-//                                            break;
-//                                        case 44:
-//                                            //acknowledge of end information
-//                                            EventBus.getDefault().post(new StopAckEvent(true));
-//                                            break;
                                         default:
                                             break;
                                     }
-
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -531,22 +695,77 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                             dp_receive.setLength(1024);
 
-                            receiveHandler.sendEmptyMessage(1);
-
-                            try {
-                                Thread.sleep(500);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            Log.d("AndroidUDP", "Received.");
+                        } catch (Exception e) {
+                            ifToReceive = false;
+                            ifToSendConnect = true;
+                            Log.d("AndroidUDP", "Time out,");
                         }
-                    } else {
                     }
                 }
+
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             } catch (SocketException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
+            } catch (Exception e) {
+                Log.d("AndroidUDP", e.getMessage());
+            }
+        }
+    }
+
+    public class UdpConnectThread extends Thread {
+        @Override
+        public void run() {
+            try {
+                byte[] buf = new byte[1024];
+                String ipValidation = Validation.validateIP(APP_IP);
+                Log.d("AndroidUDP", "IP:" + ipValidation);
+                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
+
+                s_socket_connect = new DatagramSocket();
+                r_socket = new DatagramSocket(APP_PORT);
+
+                JSONObject send_object = new JSONObject();
+                send_object.put("CHK", "pandora");
+                send_object.put("ETT", 10);
+                send_object.put("LEN", "60000");
+                int len = send_object.toString().getBytes().length;
+                String lenString = String.format("%05d", len);
+                send_object.put("LEN", lenString);
+
+                String send_content = send_object.toString();
+                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+                DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
+                r_socket.setSoTimeout(TIMEOUT);
+                while (listenStatus) {
+                    while (ifToSendConnect) {
+                        //s_socket_connect.send(dp_send);
+                        try {
+                            s_socket_connect.send(dp_send);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.d("AndroidUDP", "" + e.getMessage());
+                        }
+
+                        try {
+                            r_socket.receive(dp_receive);
+                            if (!dp_receive.getAddress().equals(APP_ADD)) {
+                                throw new IOException("Received packet from an unknown source");
+                            }
+                            ifToReceive = true;
+                            ifToSendConnect = false;
+
+                            Log.d("AndroidUDP", "Received.");
+                        } catch (Exception e) {
+                            Log.d("AndroidUDP", "Time out,");
+                        }
+                    }
+                }
+
+            }catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (SocketException e) {
                 e.printStackTrace();
             } catch (Exception e) {
                 Log.d("AndroidUDP", e.getMessage());
@@ -575,9 +794,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 while (listenStatus) {
                     s_socket_heart.send(dp_send_heart);
-                    //send a heart beat package every 20 seconds
+                    //send a heart beat package every 10 seconds
                     try {
-                        Thread.sleep(20 * 1000);
+                        Thread.sleep(10 * 1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -697,7 +916,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 Log.d("AndroidUDP", "IP:" + ipValidation);
 
                 InetAddress APP_ADD = InetAddress.getByName(APP_IP);
-                s_socket_heart = new DatagramSocket();
+                s_socket_break = new DatagramSocket();
                 JSONObject send_object = new JSONObject();
                 send_object.put("CHK", "pandora");
                 send_object.put("LEN", "99999");
@@ -707,10 +926,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 send_object.put("LEN", lenString);
 
                 String send_content = send_object.toString();
-                DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+                DatagramPacket dp_send_break = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 while (listenStatus) {
                     if (ifToSendBreak) {
-                        s_socket_heart.send(dp_send_heart);
+                        s_socket_break.send(dp_send_break);
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
@@ -735,7 +954,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         }
     }
-
 
     private void buttonSetColor(Button bt, int cl) {
         if (cl == 0) {
@@ -837,7 +1055,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         }
     }
-
 
 
     private void voiceWarning(int level) {
@@ -1005,8 +1222,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public void onBackPressed() {
-//        Intent intent = new Intent(MainActivity.this, LogoffActivity.class);
-//        startActivity(intent);
         mOffTextView = new TextView(this);
         mDialog = new android.app.AlertDialog.Builder(this)
                 .setTitle("退出程序")
