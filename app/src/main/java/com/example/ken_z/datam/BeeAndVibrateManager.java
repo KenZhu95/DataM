@@ -1,5 +1,12 @@
 package com.example.ken_z.datam;
 
+/*
+* this class is for alert voice management
+* option1: vibrate
+* option2: bee voice long
+* option3: bee voice short and pulse
+* */
+
 import android.app.Service;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;

@@ -12,13 +12,14 @@ import java.util.List;
 
 public class MApplication extends Application {
     private static MApplication instance;
-    private List<Activity> activityList = new LinkedList();
+    private List<Activity> activityList = new LinkedList(); // a list of active activities, for lifecycle management
     private String vehicle_number;
-    private int audio_index = 0;
+    private int audio_index = 0; // to record audio file index, reset to 0 when restarting
     @Override
     public void onCreate() {
 
         instance = this;
+        //initialize Baidu Map and Xunfei Speech SDK
         SDKInitializer.initialize(getApplicationContext());
         SpeechUtility.createUtility(getApplicationContext(), SpeechConstant.APPID + "=" + getString(R.string.speech_app_id));
         super.onCreate();
@@ -29,6 +30,7 @@ public class MApplication extends Application {
     }
 
     public void exit() {
+        //to exit, finish all actvities in the activity stack and call System.exit()
         for (Activity act : activityList) {
             act.finish();
         }
@@ -49,5 +51,5 @@ public class MApplication extends Application {
     }
     public void newAudio() {
         this.audio_index++;
-    }
+    } //a new audio is created and sent, index += 1
 }

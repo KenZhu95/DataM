@@ -557,8 +557,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         }
     }
 
-
-
     public class UdpAudioThread extends Thread {
         @Override
         public void run() {

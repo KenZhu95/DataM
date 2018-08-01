@@ -55,8 +55,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import de.greenrobot.event.EventBus;
 
@@ -77,17 +75,20 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
 //    private static final int MAXNUM = 10;
 //    private static final int REVNUM = 12;
+    //receive timeout length for data receive sockets (10s for connect, 15s for break)
     private static final int TIMEOUT = 10000;
     private static final int TIMEOUT_BREAK = 15000;
+    //Guide App package name
     private static final String GUIDE_APP_NAME = "com.example.ken_z.datag";
 
-
+    //buttons to show states
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
-    //private Button[] buttons;
+    //buttons for different functions
     private Button buttonSpeech, buttonPermission, buttonFinish;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
 
+    //whether to keep contact with server. always true, only to be false in onDestroy()
     private boolean listenStatus = true;
 
     private DatagramSocket r_socket;
@@ -115,12 +116,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
 
-    //guide
-    private BNRoutePlanNode mBNRoutePlanNode = null;
+    //guide start node and list of all nodes
     private List<BNRoutePlanNode> mBNRoutePlanNodes = new ArrayList<>();
     private BNRoutePlanNode mStartNode = null;
-
-    //to launch another guide app
 
     // for count down alert dialog
     private TextView mOffTextView;
@@ -143,8 +141,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //SDKInitializer.initialize(getApplicationContext());
-
         setContentView(R.layout.activity_main);
         MApplication.getInstance().addActivity(this);
         Log.d("AndroidUDP", "Start.");
@@ -169,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         relativeLayout.setLongClickable(true);
         gestureDetector = new GestureDetector((GestureDetector.OnGestureListener)this);
 
-        //UDP threads: one for data receive, one for heart break. Only to receive data in MainActivity
+        //UDP threads: one for data receive, one for heart break, others for data sending issues. Only to receive data in MainActivity
 
         new UdpReceiveThread().start();
         new UdpConnectThread().start();
@@ -191,6 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
+        //only for debugging, should be cancelled in release version
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -208,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
 
+    //check permissions (GPS info, audio, storage)
     private void startLocation() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -237,11 +235,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //goto speech tag activity
     private void startSpeech() {
         Intent intent = new Intent(MainActivity.this, SpeechActivity.class);
         startActivity(intent);
     }
 
+    //show dialog wo confirm a finish of a navigation action
     private void startFinish() {
         mOffTextView = new TextView(this);
         mDialog = new android.app.AlertDialog.Builder(this)
@@ -251,8 +251,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ifToSendNavFinishAck = true;
-                        endNav();
+                        ifToSendNavFinishAck = true; //to send a finish acknowledge message to server
+                        endNav(); //to notify a finish of navigation
                         Toast.makeText(MainActivity.this, "导航完成", Toast.LENGTH_LONG).show();
                         }
                 })
@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onStart();
         //Event Bus register
         EventBus.getDefault().register(this);
-
+        listenStatus = true;
     }
 
 //    public class UdpReceiveThread extends Thread {
@@ -539,6 +539,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 //        }
 //    }
 
+    //thread to receive data from server
     public class UdpReceiveThread extends Thread {
         @Override
         public void run() {
@@ -550,9 +551,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                 DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
 
-
-
                 while (listenStatus) {
+                    //only to receive data when connecting with server
                     while (ifToReceive) {
                         //r_socket = new DatagramSocket(APP_PORT);
                         r_socket.setSoTimeout(TIMEOUT_BREAK);
@@ -562,7 +562,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                 throw new IOException("Received packet from an unknown source");
                             }
 
-
                             String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
                             JSONObject jsonObject_;
                             jsonObject_ = new JSONObject(rev_log_);
@@ -571,17 +570,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                 String chk = jsonObject_.getString("CHK");
                                 int ETT = jsonObject_.getInt("ETT");
                                 String LEN = jsonObject_.getString("LEN");
-                                try {
-                                    int length = Integer.parseInt(LEN);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
 
                                 if (chk.equals("pandora")) {
                                     switch (ETT) {
+                                        // STATUS + HMI + Alert
                                         case 20 :
                                             try {
-
                                                 JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
                                                 JSONObject jsonObjectHMI = jsonObject_.getJSONObject("HMI"); //BMi info
                                                 JSONObject jsonObjectSTS = jsonObject_.getJSONObject("STS"); //states info
@@ -645,7 +639,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                                 e.printStackTrace();
                                             }
                                             break;
-                                        case 21:
+                                        case 21: //start a navigation
                                             try {
                                                 JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
                                                 JSONArray jsonArrayPATH = jsonObject_.getJSONArray("PATH"); //path info (points GPS)
@@ -669,6 +663,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                                     longis[i] = longi;
                                                     latis[i] = lati;
                                                 }
+                                                //pass latitude and longitude info to main thread for starting navigation
                                                 GPSEvent gpsEvent = new GPSEvent(latis, longis);
                                                 EventBus.getDefault().post(gpsEvent);
 
@@ -698,6 +693,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                     }
                                 }
                             } catch (Exception e) {
+                                //if no data arriving more than 10s, throw exception
                                 e.printStackTrace();
                             }
 
@@ -722,6 +718,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //thread to try to connect with server
     public class UdpConnectThread extends Thread {
         @Override
         public void run() {
@@ -742,9 +739,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 String lenString = String.format("%05d", len);
                 send_object.put("LEN", lenString);
 
+                /*send a json object, three keys: "CHK","ETT","LEN"
+                ETT = 10 for connection request*/
+
                 String send_content = send_object.toString();
                 DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
                 DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
+                //only to receive a piece of data from server, if fail to receive for 10s, resend connection request to server
                 r_socket.setSoTimeout(TIMEOUT);
                 while (listenStatus) {
                     while (ifToSendConnect) {
@@ -761,6 +762,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                             if (!dp_receive.getAddress().equals(APP_ADD)) {
                                 throw new IOException("Received packet from an unknown source");
                             }
+                            //if succeed to receive data from server, then receive thread can work, stop to send connection request
                             ifToReceive = true;
                             ifToSendConnect = false;
 
@@ -781,6 +783,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //thread to send heart break packages to keep connection with server
     public class UdpHeartBeatThread extends Thread {
         @Override
         public void run() {
@@ -797,6 +800,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 int len = send_object.toString().getBytes().length;
                 String lenString = String.format("%05d", len);
                 send_object.put("LEN", lenString);
+                //ETT = 12 for heart break
 
                 String send_content = send_object.toString();
                 DatagramPacket dp_send_heart = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
@@ -821,6 +825,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //thread to send messages about navigation
     public class UdpNavigationThread extends Thread {
         @Override
         public void run() {
@@ -835,6 +840,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 send_object.put("CHK", "pandora");
                 send_object.put("LEN", "60000");
                 while (listenStatus) {
+                    //to send navigation start acknowledge to server ETT=22
                     if (ifToSendNavStartAck) {
                         send_object.put("ETT", 22);
 
@@ -849,6 +855,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         ifToSendNavStartAck = false;
                     }
 
+                    //to send navigation abort acknowledge to server ETT=24
                     if (ifToSendNavAbortAck) {
                         send_object.put("ETT", 24);
                         int len = send_object.toString().getBytes().length;
@@ -867,15 +874,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                             Intent intent = new Intent();
                             ComponentName cn = new ComponentName(GUIDE_APP_NAME, GUIDE_APP_NAME + ".GuideActivity");
                             try {
+                                //open DataG App, GuideActivity page, to abort navigation and exit App
                                 intent.setComponent(cn);
                                 Bundle bundle = new Bundle();
                                 bundle.putInt(NAV_ABORT, 1);
                                 intent.putExtras(bundle);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(intent);
-                            } catch (Exception e) {
-
-                            }
+                            } catch (Exception e) { }
 
                         } else {
                             Toast.makeText(MainActivity.this, "Not Installed" + GUIDE_APP_NAME, Toast.LENGTH_LONG).show();
@@ -884,6 +890,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         ifToSendNavAbortAck = false;
                     }
 
+                    //to send navigation finish notification message to server ETT=25
                     if (ifToSendNavFinishAck) {
                         send_object.put("ETT", 25);
                         int len = send_object.toString().getBytes().length;
@@ -917,6 +924,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //thread to send break notification to server, only when exiting ths App ETT=11
     public class UdpBreakThread extends Thread {
         @Override
         public void run() {
@@ -940,6 +948,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     if (ifToSendBreak) {
                         s_socket_break.send(dp_send_break);
                         try {
+                            //exit 0.5s after sending break notification out
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -964,6 +973,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //to show the right colors on each STATUS button
     private void buttonSetColor(Button bt, int cl) {
         if (cl == 0) {
             bt.setBackgroundColor(getResources().getColor(R.color.silver));
@@ -999,6 +1009,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     }
 
+    //to jump to next activity with scrolling left
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
         final int FLING_MIN_DISTANCE = 100;
@@ -1022,6 +1033,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
 
+    //receive STATUS data from receive thread, to update button colors (UI) within main thread and voice alert
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMainThread(SendEvent event) {
         if (event != null) {
@@ -1029,8 +1041,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             int[] alert_res = event.getAlertMsg();
             Log.i("EVentBus", String.valueOf(res[0]));
             if (res.length != 9) return;
-            int count = 0;
-            int index = 0;
             Button[] buttons = new Button[]{button1, button2, button3, button4, button5, button6, button7, button8, button9};
             for (int i = 0; i < 9; i++) {
                 buttonSetColor(buttons[i], res[i]);
@@ -1040,21 +1050,26 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //receive GPS data (longitude, latitude pairs) from receive thread, and to start DataG for navia=gation
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMainThread(GPSEvent event) {
         if (event != null) {
             longitudes = event.getMsglong();
             latitudes = event.getMsgLati();
+            mBNRoutePlanNodes.clear();
             for (int i = 0; i < latitudes.length; i++) {
                 String descrip = "node" + (i+1);
                 BNRoutePlanNode node = new BNRoutePlanNode(longitudes[i], latitudes[i], descrip, descrip, BNRoutePlanNode.CoordinateType.BD09LL);
+                //generate node from each (longitude, latitude) pair and add to nodes list
                 mBNRoutePlanNodes.add(node);
             }
+            //set the first node in list as start node
             mStartNode = mBNRoutePlanNodes.get(0);
             createDialog();
         }
     }
 
+    //receive navigation abort notifications, and create a dialog to open DataG App for navigation
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onEventMainThread(NavAbortEvent event) {
         if (event != null) {
@@ -1065,7 +1080,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-
+    //to make alert voice according to STATUS
     private void voiceWarning(int level) {
         if (level == 0) {
             return;
@@ -1077,7 +1092,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     }
 
-
+    //check whether an App is installed (to check DataG App)
     public static boolean isApkInstalled(Context context, String packageName) {
         if (TextUtils.isEmpty(packageName)) {
             return false;
@@ -1091,6 +1106,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //create a dialpg with only "confirm" button to start navigation
     public void createDialog() {
         mOffTextView = new TextView(this);
         mDialog = new android.app.AlertDialog.Builder(this)
@@ -1101,6 +1117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mOffTimer.cancel();
+                        //change status to "on navigation", send an acknowledge to server and launch DataG App
                         ifToSendNavStartAck = true;
                         beginNav();
                         launchGuide();
@@ -1116,6 +1133,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 .create();
         mDialog.show();
         mDialog.setCanceledOnTouchOutside(false);
+
+        //dialog text contains a count down of 5s. If exceeds 5s, automatically launch DataG and start navigation
 
         mOffHandler = new Handler() {
             public void handleMessage(Message msg) {
@@ -1140,7 +1159,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         //count down timer
         mOffTimer = new Timer(true);
         TimerTask tt = new TimerTask() {
-            int countTime = 10;
+            int countTime = 5;
             @Override
             public void run() {
                 if (countTime > 0) {
@@ -1154,7 +1173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mOffTimer.schedule(tt, 1000, 1000);
     }
 
-
+    //create a dialog to abort navigation, only "confirm" button, count down 5s
     public void createAbortDialog() {
         if (!ifCurrentNav) {
             return;
@@ -1215,13 +1234,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mOffTimer.schedule(tt, 1000, 1000);
     }
 
+    //launch DataG APP for navigation, pass guide nodes
     public void launchGuide() {
         PackageManager packageManager = getPackageManager();
         if (isApkInstalled(getApplicationContext(),GUIDE_APP_NAME)) {
             Intent intent = packageManager.getLaunchIntentForPackage(GUIDE_APP_NAME);
-            //intent.putExtra("title", "From DataM");
-            //intent.putExtra("longs", longitudes);
-            //intent.putExtra("latis", latitudes);
             Bundle bundle = new Bundle();
             bundle.putSerializable(ROUTE_PLAN_NODE, mStartNode);
             bundle.putSerializable(ROUTE_PLAN_NODES, (Serializable) mBNRoutePlanNodes);
@@ -1234,6 +1251,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+    //to exit APP, show a dialog for confirmation, and send a break notification before exiting
     @Override
     public void onBackPressed() {
         mOffTextView = new TextView(this);

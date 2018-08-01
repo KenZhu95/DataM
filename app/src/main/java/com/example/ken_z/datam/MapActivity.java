@@ -534,7 +534,6 @@ public class MapActivity extends AppCompatActivity {
                         mOffTimer.cancel();
                         MainActivity.beginNav();
                         startNavigation();
-                        //off();
                     }
                 })
                 .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -561,7 +560,6 @@ public class MapActivity extends AppCompatActivity {
                       MainActivity.beginNav();
                       startNavigation();
                   }
-                  //off();
                   mOffTimer.cancel();
               }
               super.handleMessage(msg);
