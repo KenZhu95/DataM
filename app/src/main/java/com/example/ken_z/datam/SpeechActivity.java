@@ -134,19 +134,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             }
         });
 
-//        String SEND_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/iat.wav";
-//        try {
-//            accessFile = new RandomAccessFile(SEND_FILE_PATH, "r");
-//            long ac_length = accessFile.length();
-//            translationData = new byte[(int)ac_length];
-//            accessFile.read(translationData);
-//            audio_index = MApplication.getInstance().getAIN();
-//            MApplication.getInstance().newAudio();
-//            //ifToSendAudio = true;
-//            Toast.makeText(SpeechActivity.this, "length is :" + translationData.length, Toast.LENGTH_LONG).show();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
         new UdpAudioThread().start();
     }
 

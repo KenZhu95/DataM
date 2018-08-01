@@ -532,6 +532,7 @@ public class MapActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mOffTimer.cancel();
+                        MainActivity.beginNav();
                         startNavigation();
                         //off();
                     }
@@ -557,6 +558,7 @@ public class MapActivity extends AppCompatActivity {
               } else {
                   if (mDialog != null) {
                       mDialog.dismiss();
+                      MainActivity.beginNav();
                       startNavigation();
                   }
                   //off();

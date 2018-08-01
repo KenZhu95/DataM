@@ -102,6 +102,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     boolean ifToSendBreak = false;
     boolean ifToSendConnect = true;
     boolean ifToReceive = false;
+    static boolean ifCurrentNav = false;
+
+    public static void beginNav() {
+        ifCurrentNav = true;
+    }
+
+    public static void endNav() {
+        ifCurrentNav = false;
+    }
 
 
     private ReceiveHandler receiveHandler = new ReceiveHandler();
@@ -182,12 +191,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
-//        button1.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                //listenStatus = !listenStatus;
-//            }
-//        });
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createAbortDialog();
+            }
+        });
 
         buttonFinish.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -243,10 +252,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         ifToSendNavFinishAck = true;
+                        endNav();
                         Toast.makeText(MainActivity.this, "导航完成", Toast.LENGTH_LONG).show();
-
-                        //off();
-                    }
+                        }
                 })
                 .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                     @Override
@@ -851,6 +859,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         DatagramPacket dp_send_start = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
 
                         s_socket_navigation.send(dp_send_start);
+                        endNav();
 
                         PackageManager packageManager = getPackageManager();
                         if (isApkInstalled(getApplicationContext(),GUIDE_APP_NAME)) {
@@ -1093,6 +1102,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     public void onClick(DialogInterface dialog, int which) {
                         mOffTimer.cancel();
                         ifToSendNavStartAck = true;
+                        beginNav();
                         launchGuide();
                     }
                 })
@@ -1118,6 +1128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     if (mDialog != null) {
                         mDialog.dismiss();
                         ifToSendNavStartAck = true;
+                        beginNav();
                         launchGuide();
                     }
                     mOffTimer.cancel();
@@ -1145,6 +1156,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
 
     public void createAbortDialog() {
+        if (!ifCurrentNav) {
+            return;
+        }
         mOffTextView = new TextView(this);
         mDialog = new android.app.AlertDialog.Builder(this)
                 .setTitle("Abort Navigation")
