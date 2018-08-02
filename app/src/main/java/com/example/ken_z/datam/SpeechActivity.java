@@ -2,19 +2,26 @@ package com.example.ken_z.datam;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -53,10 +60,14 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import de.greenrobot.event.EventBus;
 
 import static com.example.ken_z.datam.MainActivity.APP_IP;
+import static com.example.ken_z.datam.MainActivity.breakWarningMain;
+import static com.example.ken_z.datam.ShowActivity.breakWarningShow;
 
 public class SpeechActivity extends Activity implements View.OnClickListener {
 
@@ -81,6 +92,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
     private boolean mTranslateEnable = false;
+    //private boolean ifCurUpload = false;
     private int currVolume;
 
     //to send audio data, translation and time to server
@@ -93,11 +105,16 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
     private int audio_index = -1;
     private boolean listenStatus = true;
     private boolean ifToSendAudio = false;
+    private boolean ifShowDialog = true;
     private int tries_audio = 0;
     DatagramSocket s_socket_audio;
     private static final int MAXNUM = 10;
     private static final int MAXBYTES = 40000;
 
+    // for count down alert dialog
+    private TextView mOffTextView;
+    private Dialog mDialog;
+    Button buttonUpload;
 
 
     @SuppressLint("ShowToast")
@@ -107,6 +124,8 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.activity_speech);
         MApplication.getInstance().addActivity(this);
 
+        buttonUpload = findViewById(R.id.iat_upload_wav);
+        updateUploadButton(false);
         initLayout();
         // 初始化识别无UI识别对象
         //SpeechUtility.createUtility(getApplicationContext(), SpeechConstant.APPID + "=" + R.string.speech_app_id);
@@ -120,9 +139,9 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         mSharedPreferences = getSharedPreferences(PREFER_NAME,
                 Activity.MODE_PRIVATE);
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        mResultText = ((EditText) findViewById(R.id.iat_text));
-        textSpeaker = (TextView) findViewById(R.id.text_speaker);
-        switchSpeaker = (Switch) findViewById(R.id.switch_speaker);
+        mResultText = findViewById(R.id.iat_text);
+        textSpeaker = findViewById(R.id.text_speaker);
+        switchSpeaker = findViewById(R.id.switch_speaker);
         switchSpeaker.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -178,8 +197,8 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
      */
     private void initLayout() {
         findViewById(R.id.iat_recognize).setOnClickListener(SpeechActivity.this);
-        findViewById(R.id.iat_recognize_stream).setOnClickListener(SpeechActivity.this);
-        findViewById(R.id.iat_upload_wav).setOnClickListener(SpeechActivity.this);
+        //findViewById(R.id.iat_recognize_stream).setOnClickListener(SpeechActivity.this);
+        buttonUpload.setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_stop).setOnClickListener(SpeechActivity.this);
         findViewById(R.id.iat_cancel).setOnClickListener(SpeechActivity.this);
     }
@@ -235,37 +254,37 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                 }
                 break;
             // 音频流识别
-            case R.id.iat_recognize_stream:
-                mResultText.setText(null);// 清空显示内容
-                mIatResults.clear();
-                // 设置参数
-                setParam();
-                // 设置音频来源为外部文件
-                mIat.setParameter(SpeechConstant.AUDIO_SOURCE, "-1");
-                // 也可以像以下这样直接设置音频文件路径识别（要求设置文件在sdcard上的全路径）：
-                // mIat.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
-                // mIat.setParameter(SpeechConstant.ASR_SOURCE_PATH, "sdcard/XXX/XXX.pcm");
-                ret = mIat.startListening(mRecognizerListener);
-                if (ret != ErrorCode.SUCCESS) {
-                    showTip("识别失败,错误码：" + ret);
-                } else {
-                    byte[] audioData = FucUtil.readAudioFile(SpeechActivity.this, "iattest.wav");
-
-                    if (null != audioData) {
-                        showTip(getString(R.string.text_begin_recognizer));
-                        // 一次（也可以分多次）写入音频文件数据，数据格式必须是采样率为8KHz或16KHz（本地识别只支持16K采样率，云端都支持），
-                        // 位长16bit，单声道的wav或者pcm
-                        // 写入8KHz采样的音频时，必须先调用setParameter(SpeechConstant.SAMPLE_RATE, "8000")设置正确的采样率
-                        // 注：当音频过长，静音部分时长超过VAD_EOS将导致静音后面部分不能识别。
-                        // 音频切分方法：FucUtil.splitBuffer(byte[] buffer,int length,int spsize);
-                        mIat.writeAudio(audioData, 0, audioData.length);
-                        mIat.stopListening();
-                    } else {
-                        mIat.cancel();
-                        showTip("读取音频流失败");
-                    }
-                }
-                break;
+//            case R.id.iat_recognize_stream:
+//                mResultText.setText(null);// 清空显示内容
+//                mIatResults.clear();
+//                // 设置参数
+//                setParam();
+//                // 设置音频来源为外部文件
+//                mIat.setParameter(SpeechConstant.AUDIO_SOURCE, "-1");
+//                // 也可以像以下这样直接设置音频文件路径识别（要求设置文件在sdcard上的全路径）：
+//                // mIat.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
+//                // mIat.setParameter(SpeechConstant.ASR_SOURCE_PATH, "sdcard/XXX/XXX.pcm");
+//                ret = mIat.startListening(mRecognizerListener);
+//                if (ret != ErrorCode.SUCCESS) {
+//                    showTip("识别失败,错误码：" + ret);
+//                } else {
+//                    byte[] audioData = FucUtil.readAudioFile(SpeechActivity.this, "iattest.wav");
+//
+//                    if (null != audioData) {
+//                        showTip(getString(R.string.text_begin_recognizer));
+//                        // 一次（也可以分多次）写入音频文件数据，数据格式必须是采样率为8KHz或16KHz（本地识别只支持16K采样率，云端都支持），
+//                        // 位长16bit，单声道的wav或者pcm
+//                        // 写入8KHz采样的音频时，必须先调用setParameter(SpeechConstant.SAMPLE_RATE, "8000")设置正确的采样率
+//                        // 注：当音频过长，静音部分时长超过VAD_EOS将导致静音后面部分不能识别。
+//                        // 音频切分方法：FucUtil.splitBuffer(byte[] buffer,int length,int spsize);
+//                        mIat.writeAudio(audioData, 0, audioData.length);
+//                        mIat.stopListening();
+//                    } else {
+//                        mIat.cancel();
+//                        showTip("读取音频流失败");
+//                    }
+//                }
+//                break;
             // 停止听写
             case R.id.iat_stop:
                 mIat.stopListening();
@@ -346,8 +365,10 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             Log.d(TAG, results.getResultString());
             if( mTranslateEnable ){
                 printTransResult( results );
+                createUpLoadDialog();
             }else{
                 printResult(results);
+                createUpLoadDialog();
             }
 
             if (isLast) {
@@ -402,8 +423,14 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         public void onResult(RecognizerResult results, boolean isLast) {
             if( mTranslateEnable ){
                 printTransResult( results );
+                createUpLoadDialog();
             }else{
                 printResult(results);
+                if (ifShowDialog) {
+                    ifShowDialog = false;
+                    createUpLoadDialog();
+                }
+
             }
 
         }
@@ -553,10 +580,40 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             audio_index = MApplication.getInstance().getAIN();
             MApplication.getInstance().newAudio();
             ifToSendAudio = true;
+            //ifCurUpload = true;
+            updateUploadButton(true);
             Toast.makeText(SpeechActivity.this, "length is :" + translationData.length, Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void createUpLoadDialog() {
+        mOffTextView = new TextView(this);
+        mDialog = new AlertDialog.Builder(this)
+                .setTitle("上传音频")
+                .setCancelable(false)
+                .setView(mOffTextView)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        upLoadWav();
+                        ifShowDialog = true;
+                        dialog.cancel();
+
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+        mDialog.show();
+        mDialog.setCanceledOnTouchOutside(false);
+
+
     }
 
     public class UdpAudioThread extends Thread {
@@ -660,8 +717,33 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             if (ack) {
                 ifToSendAudio = false;
                 tries_audio = 0;
+                //ifCurUpload = false;
+                updateUploadButton(false);
                 Toast.makeText(SpeechActivity.this, "成功发送音频", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    //to reset warning text UI when breaking and connection
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onEventMainThread(ResetEvent event) {
+        if (event != null) {
+            boolean reset = event.getMsg();
+            if (reset) {
+                breakWarningMain.setVisibility(View.VISIBLE);
+                breakWarningShow.setVisibility(View.VISIBLE);
+            } else {
+                breakWarningMain.setVisibility(View.INVISIBLE);
+                breakWarningShow.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    private void updateUploadButton(boolean cur) {
+        if (cur) {
+            buttonUpload.setBackgroundColor(getResources().getColor(R.color.colorWarning));
+        } else {
+            buttonUpload.setBackgroundColor(getResources().getColor(R.color.silver));
         }
     }
 }

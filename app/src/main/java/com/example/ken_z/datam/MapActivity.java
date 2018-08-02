@@ -76,6 +76,8 @@ import de.greenrobot.event.EventBus;
 
 import static com.example.ken_z.datam.BeeAndVibrateManager.playBeeAndVibrate;
 import static com.example.ken_z.datam.BeeAndVibrateManager.playWarnAndVibrate;
+import static com.example.ken_z.datam.MainActivity.breakWarningMain;
+import static com.example.ken_z.datam.ShowActivity.breakWarningShow;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -498,6 +500,20 @@ public class MapActivity extends AppCompatActivity {
     }
 
 
+    //to reset warning text UI when breaking and connection
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onEventMainThread(ResetEvent event) {
+        if (event != null) {
+            boolean reset = event.getMsg();
+            if (reset) {
+                breakWarningMain.setVisibility(View.VISIBLE);
+                breakWarningShow.setVisibility(View.VISIBLE);
+            } else {
+                breakWarningMain.setVisibility(View.INVISIBLE);
+                breakWarningShow.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
 
     private void voiceWarning(int level) {
         if (level == 0) {

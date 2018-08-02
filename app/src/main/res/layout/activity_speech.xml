@@ -84,14 +84,6 @@
             android:textSize="20sp" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/iat_recognize_stream"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="音频流识别"
-        android:textSize="20sp" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -106,7 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="上传音频"
-            android:textSize="17sp" />
+            android:textSize="32sp" />
 
         <!--<Button-->
             <!--android:id="@+id/iat_upload_userwords"-->

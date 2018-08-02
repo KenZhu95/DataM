@@ -208,4 +208,20 @@
         app:layout_constraintStart_toStartOf="@+id/button_HDM"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/text_break_show"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="28dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:text="当前未连接！"
+        android:textColor="@color/colorWarning"
+        android:textSize="40sp"
+        app:layout_constraintBottom_toTopOf="@+id/button_ACC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

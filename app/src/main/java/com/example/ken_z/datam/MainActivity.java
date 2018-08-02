@@ -63,12 +63,11 @@ import static com.example.ken_z.datam.BeeAndVibrateManager.playWarnAndVibrate;
 import static com.example.ken_z.datam.MapActivity.ROUTE_PLAN_NODE;
 import static com.example.ken_z.datam.MapActivity.ROUTE_PLAN_NODES;
 import static com.example.ken_z.datam.MapActivity.NAV_ABORT;
+import static com.example.ken_z.datam.ShowActivity.breakWarningShow;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener, GestureDetector.OnGestureListener {
     private static final String TAG = MainActivity.class.getName();
 
-    //private static final String APP_IP = "10.110.110.188";
-    //private static final String APP_IP = "192.168.8.99";
     //public static final String APP_IP = "10.111.10.139";
     public static final String APP_IP = "192.168.1.111";
     private static final int APP_PORT = 9990;
@@ -88,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Button buttonSpeech, buttonPermission, buttonFinish;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
+    public static TextView breakWarningMain;
 
     //whether to keep contact with server. always true, only to be false in onDestroy()
     private boolean listenStatus = true;
@@ -161,6 +161,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         buttonPermission = findViewById(R.id.button_permission);
         buttonSpeech = findViewById(R.id.button_speech);
         buttonFinish = findViewById(R.id.button_finish);
+        breakWarningMain = findViewById(R.id.text_break_main);
+        breakWarningMain.setVisibility(View.VISIBLE);
 
         relativeLayout.setOnTouchListener(this);
         relativeLayout.setLongClickable(true);
@@ -704,6 +706,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         } catch (Exception e) {
                             ifToReceive = false;
                             ifToSendConnect = true;
+                            //resetUI();
+                            ResetEvent resetEvent = new ResetEvent(true);
+                            EventBus.getDefault().postSticky(resetEvent);
                             Log.d("AndroidUDP", "Time out,");
                         }
                     }
@@ -766,6 +771,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                             //if succeed to receive data from server, then receive thread can work, stop to send connection request
                             ifToReceive = true;
                             ifToSendConnect = false;
+                            ResetEvent resetEvent = new ResetEvent(false);
+                            EventBus.getDefault().postSticky(resetEvent);
 
                             Log.d("AndroidUDP", "Received.");
                         } catch (Exception e) {
@@ -974,6 +981,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
+
     //to show the right colors on each STATUS button
     private void buttonSetColor(Button bt, int cl) {
         if (cl == 0) {
@@ -1077,6 +1085,21 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             boolean abort = event.isMsg_abort();
             if (abort) {
                 createAbortDialog();
+            }
+        }
+    }
+
+    //to reset warning text UI when breaking and connection
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onEventMainThread(ResetEvent event) {
+        if (event != null) {
+            boolean reset = event.getMsg();
+            if (reset) {
+                breakWarningMain.setVisibility(View.VISIBLE);
+                breakWarningShow.setVisibility(View.VISIBLE);
+            } else {
+                breakWarningMain.setVisibility(View.INVISIBLE);
+                breakWarningShow.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -1279,5 +1302,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mDialog.setCanceledOnTouchOutside(false);
 
     }
+
 
 }

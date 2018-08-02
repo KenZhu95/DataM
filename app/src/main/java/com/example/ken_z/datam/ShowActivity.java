@@ -19,6 +19,7 @@ import de.greenrobot.event.EventBus;
 
 import static com.example.ken_z.datam.BeeAndVibrateManager.playBeeAndVibrate;
 import static com.example.ken_z.datam.BeeAndVibrateManager.playWarnAndVibrate;
+import static com.example.ken_z.datam.MainActivity.breakWarningMain;
 
 public class ShowActivity extends AppCompatActivity implements View.OnTouchListener, GestureDetector.OnGestureListener {
     Button buttonHDM;
@@ -36,6 +37,7 @@ public class ShowActivity extends AppCompatActivity implements View.OnTouchListe
     Button level_5;
     Button buttonAPL;
     Button buttonBKP;
+    public static TextView breakWarningShow;
     private ConstraintLayout constraintLayout;
     private GestureDetector gestureDetector;
 
@@ -46,25 +48,26 @@ public class ShowActivity extends AppCompatActivity implements View.OnTouchListe
         this.getWindow().setBackgroundDrawable(drawable);
         setContentView(R.layout.activity_show);
         MApplication.getInstance().addActivity(this);
-        //buttonMap = (Button) findViewById(R.id.button_map);
-        buttonHDM = (Button) findViewById(R.id.button_HDM);
-        buttonLDWL = (Button) findViewById(R.id.button_LDWL);
-        buttonLDWR = (Button) findViewById(R.id.button_LDWR);
-        buttonBSDL = (Button) findViewById(R.id.button_BSDL);
-        buttonBSDR = (Button) findViewById(R.id.button_BSDR);
-        buttonAPL = (Button) findViewById(R.id.button_ACC);
-        buttonBKP = (Button) findViewById(R.id.button_BRK);
+        buttonHDM = findViewById(R.id.button_HDM);
+        buttonLDWL = findViewById(R.id.button_LDWL);
+        buttonLDWR = findViewById(R.id.button_LDWR);
+        buttonBSDL = findViewById(R.id.button_BSDL);
+        buttonBSDR = findViewById(R.id.button_BSDR);
+        buttonAPL = findViewById(R.id.button_ACC);
+        buttonBKP = findViewById(R.id.button_BRK);
 
-        buttonIndex = (Button) findViewById(R.id.button_TGT);
-        showIndex = (TextView) findViewById(R.id.show_index);
-        level_1 = (Button) findViewById(R.id.button_level_1);
-        level_2 = (Button) findViewById(R.id.button_level_2);
-        level_3 = (Button) findViewById(R.id.button_level_3);
-        level_4 = (Button) findViewById(R.id.button_level_4);
-        level_5 = (Button) findViewById(R.id.button_level_5);
+        buttonIndex = findViewById(R.id.button_TGT);
+        showIndex = findViewById(R.id.show_index);
+        level_1 = findViewById(R.id.button_level_1);
+        level_2 = findViewById(R.id.button_level_2);
+        level_3 = findViewById(R.id.button_level_3);
+        level_4 = findViewById(R.id.button_level_4);
+        level_5 = findViewById(R.id.button_level_5);
+        breakWarningShow = findViewById(R.id.text_break_show);
+        breakWarningShow.setVisibility(View.VISIBLE);
 
 
-        constraintLayout = (ConstraintLayout) findViewById(R.id.constraint_show);
+        constraintLayout = findViewById(R.id.constraint_show);
         constraintLayout.setOnTouchListener(this);
         constraintLayout.setLongClickable(true);
         gestureDetector = new GestureDetector((GestureDetector.OnGestureListener) this);
@@ -246,10 +249,25 @@ public class ShowActivity extends AppCompatActivity implements View.OnTouchListe
                 }
             }
 
+            breakWarningShow.setVisibility(View.INVISIBLE);
             voiceWarning(res_alert[0]);
         }
     }
 
+    //to reset warning text UI when breaking and connection
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onEventMainThread(ResetEvent event) {
+        if (event != null) {
+            boolean reset = event.getMsg();
+            if (reset) {
+                breakWarningMain.setVisibility(View.VISIBLE);
+                breakWarningShow.setVisibility(View.VISIBLE);
+            } else {
+                breakWarningMain.setVisibility(View.INVISIBLE);
+                breakWarningShow.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
 
     private void voiceWarning(int level) {
         if (level == 0) {
