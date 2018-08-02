@@ -56,11 +56,13 @@ import java.util.LinkedHashMap;
 
 import de.greenrobot.event.EventBus;
 
+import static com.example.ken_z.datam.MainActivity.APP_IP;
+
 public class SpeechActivity extends Activity implements View.OnClickListener {
 
     public static final String PREFER_NAME = "com.iflytek.setting";
     //private static final String APP_IP = "192.168.8.99";
-    private static final String APP_IP = "10.111.10.111";
+    //private static final String APP_IP = "10.111.10.139";
     private static final int SERVER_RECEIVE_PORT = 9992;
     private static String TAG = SpeechActivity.class.getSimpleName();
     // 语音听写对象

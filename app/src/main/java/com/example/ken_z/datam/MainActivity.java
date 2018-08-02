@@ -69,8 +69,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     //private static final String APP_IP = "10.110.110.188";
     //private static final String APP_IP = "192.168.8.99";
-    private static final String APP_IP = "10.111.10.111";
-    private static final int APP_PORT = 9980;
+    //public static final String APP_IP = "10.111.10.139";
+    public static final String APP_IP = "192.168.1.111";
+    private static final int APP_PORT = 9990;
     private static final int SERVER_RECEIVE_PORT = 9992;
 
 //    private static final int MAXNUM = 10;
@@ -367,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 //                        Log.d("AndroidUDP", "Received.");
 //                    } catch (Exception e) {
 //                        tries += 1;
-//                        Log.d("AndroidUDP", "Time out," + (MAXNUM - tries) + " more tries...");
+//                        Log.d("AndroidUDP", "Time out," + (10 - tries) + " more tries...");
 //                    }
 //
 //                    if (receivedResponse) {
@@ -539,7 +540,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 //        }
 //    }
 
-    //thread to receive data from server
+//    thread to receive data from server
     public class UdpReceiveThread extends Thread {
         @Override
         public void run() {
