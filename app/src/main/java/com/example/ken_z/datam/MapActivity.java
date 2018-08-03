@@ -153,13 +153,13 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-        button_navi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //startNavigation();
-                createDialog();
-            }
-        });
+//        button_navi.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                //startNavigation();
+//                createDialog();
+//            }
+//        });
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {

@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     //public static final String APP_IP = "10.111.10.139";
     public static final String APP_IP = "192.168.1.111";
+    //public static final String APP_IP = "192.168.8.99";
     private static final int APP_PORT = 9990;
     private static final int SERVER_RECEIVE_PORT = 9992;
 
@@ -191,12 +192,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         });
 
         //only for debugging, should be cancelled in release version
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                createAbortDialog();
-            }
-        });
+//        button1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                createAbortDialog();
+//            }
+//        });
 
         buttonFinish.setOnClickListener(new View.OnClickListener() {
             @Override
