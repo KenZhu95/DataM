@@ -28,6 +28,7 @@ import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.widget.Button;
 import android.util.Log;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -69,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private static final String TAG = MainActivity.class.getName();
 
     //public static final String APP_IP = "10.111.10.139";
-    public static final String APP_IP = "192.168.1.111";
-    //public static final String APP_IP = "192.168.8.99";
+    //public static final String APP_IP = "192.168.1.111";
+    public static String APP_IP = "192.168.8.99";
     private static final int APP_PORT = 9990;
     private static final int SERVER_RECEIVE_PORT = 9992;
 
@@ -86,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
     //buttons for different functions
     private Button buttonSpeech, buttonPermission, buttonFinish;
+    private Button buttonResetIP, buttonChangeIP, buttonStartAll;
+    private EditText text_IP;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
     public static TextView breakWarningMain;
@@ -127,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Handler mOffHandler;
     private Timer mOffTimer;
     private Dialog mDialog;
+    private Dialog mIPDialog;
 
     private double[] latitudes;
     private double[] longitudes;
@@ -162,6 +166,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         buttonPermission = findViewById(R.id.button_permission);
         buttonSpeech = findViewById(R.id.button_speech);
         buttonFinish = findViewById(R.id.button_finish);
+        buttonChangeIP = findViewById(R.id.button_change_IP);
+        buttonResetIP = findViewById(R.id.button_reset_IP);
+        buttonStartAll = findViewById(R.id.button_start_all);
+        text_IP = findViewById(R.id.edit_IP);
         breakWarningMain = findViewById(R.id.text_break_main);
         breakWarningMain.setVisibility(View.VISIBLE);
 
@@ -169,13 +177,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         relativeLayout.setLongClickable(true);
         gestureDetector = new GestureDetector((GestureDetector.OnGestureListener)this);
 
-        //UDP threads: one for data receive, one for heart break, others for data sending issues. Only to receive data in MainActivity
 
-        new UdpReceiveThread().start();
-        new UdpConnectThread().start();
-        new UdpHeartBeatThread().start();
-        new UdpNavigationThread().start();
-        new UdpBreakThread().start();
 
         buttonPermission.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -206,6 +208,89 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
+        buttonResetIP.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetIP();
+            }
+        });
+
+        buttonChangeIP.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeIP();
+            }
+        });
+
+        buttonStartAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startAll();
+            }
+        });
+    }
+
+    private void startAll() {
+        //UDP threads: one for data receive, one for heart break, others for data sending issues. Only to receive data in MainActivity
+
+        new UdpReceiveThread().start();
+        new UdpConnectThread().start();
+        new UdpHeartBeatThread().start();
+        new UdpNavigationThread().start();
+        new UdpBreakThread().start();
+    }
+
+    private void changeIP() {
+        final String newIP = text_IP.getText().toString();
+        if (newIP == null || newIP.equals("")) {
+            Toast.makeText(MainActivity.this, "IP地址为空", Toast.LENGTH_LONG).show();
+        } else {
+            mOffTextView = new TextView(this);
+            mIPDialog = new android.app.AlertDialog.Builder(this)
+                    .setTitle("确认更改IP地址")
+                    .setCancelable(false)
+                    .setView(mOffTextView)
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            APP_IP = newIP;
+                            Toast.makeText(MainActivity.this, "修改IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mIPDialog.dismiss();
+                        }
+                    })
+                    .create();
+            mIPDialog.show();
+            mIPDialog.setCanceledOnTouchOutside(false);
+        }
+    }
+
+    private void resetIP() {
+        mOffTextView = new TextView(this);
+        mIPDialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("确认重置IP地址")
+                .setCancelable(false)
+                .setView(mOffTextView)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        APP_IP = "192.168.8.99";
+                        Toast.makeText(MainActivity.this, "重置IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mIPDialog.dismiss();
+                    }
+                })
+                .create();
+        mIPDialog.show();
+        mIPDialog.setCanceledOnTouchOutside(false);
     }
 
 
