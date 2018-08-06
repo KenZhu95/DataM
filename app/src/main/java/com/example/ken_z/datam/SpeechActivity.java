@@ -60,6 +60,8 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -105,16 +107,38 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
     private int audio_index = -1;
     private boolean listenStatus = true;
     private boolean ifToSendAudio = false;
+    private boolean ifToSendQueue = false;
     private boolean ifShowDialog = true;
+    private boolean isSendingQueue = false;
     private int tries_audio = 0;
+    private int tries_queue = 0;
     DatagramSocket s_socket_audio;
-    private static final int MAXNUM = 10;
+    DatagramSocket s_socket_queue;
+    private static final int MAXNUM = 5;
+    private static final int MAXNUM_QUEUE = 2;
     private static final int MAXBYTES = 40000;
+
+    Queue<AudioItem> audioItemQueue = new LinkedList<>();
 
     // for count down alert dialog
     private TextView mOffTextView;
     private Dialog mDialog;
     Button buttonUpload;
+
+    private class AudioItem {
+        private byte[] transData;
+        private String transText;
+        private int[] dates;
+        private int[] times;
+
+        AudioItem(byte[] transD, String transT, int[] date, int[] time) {
+            transData = transD;
+            transText = transT;
+            dates = date;
+            times = time;
+        }
+
+    }
 
 
     @SuppressLint("ShowToast")
@@ -125,7 +149,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         MApplication.getInstance().addActivity(this);
 
         buttonUpload = findViewById(R.id.iat_upload_wav);
-        updateUploadButton(false);
+        updateUploadButton(0);
         initLayout();
         // 初始化识别无UI识别对象
         //SpeechUtility.createUtility(getApplicationContext(), SpeechConstant.APPID + "=" + R.string.speech_app_id);
@@ -551,8 +575,10 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
             audio_index = MApplication.getInstance().getAIN();
             MApplication.getInstance().newAudio();
             ifToSendAudio = true;
+            isSendingQueue = false;
+            tries_audio = 0;
             //ifCurUpload = true;
-            updateUploadButton(true);
+            updateUploadButton(2);
             Toast.makeText(SpeechActivity.this, "length is :" + translationData.length, Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
@@ -577,6 +603,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                 .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        ifShowDialog = true;
                         dialog.cancel();
                     }
                 })
@@ -638,7 +665,12 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                             s_socket_audio.send(dp_send_audio);
 
                             try {
-                                Thread.sleep(1000);
+                                if (tries_audio < 2) {
+                                    Thread.sleep(1000);
+                                } else {
+                                    Thread.sleep(2000);
+                                }
+
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -668,6 +700,115 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                             e.printStackTrace();
                         }
                     }
+                    if (tries_audio == MAXNUM) {
+                        AudioItem item = new AudioItem(translationData, uploadText, curDates, curTimes);
+                        audioItemQueue.offer(item);
+                        updateUploadButton(1);
+                        ifToSendAudio = false;
+                        tries_audio++;
+                    }
+                }
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.d("AndroidUDP", e.getMessage());
+            }
+        }
+    }
+
+
+    public class UdpQueueThread extends Thread {
+        @Override
+        public void run() {
+            try {
+                String ipValidation = Validation.validateIP(APP_IP);
+                Log.d("AndroidUDP", "IP:" + ipValidation);
+
+                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
+                s_socket_queue = new DatagramSocket();
+                JSONObject send_object = new JSONObject();
+                send_object.put("CHK", "pandora");
+                send_object.put("LEN", "60000");
+                send_object.put("ETT", 30);
+                JSONObject send_time = new JSONObject();
+
+                while (listenStatus) {
+                    while (ifToSendQueue && tries_queue < MAXNUM_QUEUE) {
+                        AudioItem audioItem = audioItemQueue.peek();
+
+                        send_time.put("YEAR", audioItem.dates[0]);
+                        send_time.put("MON", audioItem.dates[1]);
+                        send_time.put("DAY", audioItem.dates[2]);
+                        send_time.put("HOUR", audioItem.times[0]);
+                        send_time.put("MIN", audioItem.times[1]);
+                        send_time.put("SEC", audioItem.times[2]);
+                        send_object.put("TIME", send_time);
+                        send_object.put("AIN", MApplication.getInstance().getAIN());
+                        send_object.put("TRAN", audioItem.transText);
+
+                        //each package with audio data length MAXBYTES
+                        int audioLength = audioItem.transData.length;
+                        int quo = audioLength / MAXBYTES;
+                        int rem = audioLength % MAXBYTES;
+                        int lastLen = rem == 0 ? MAXBYTES : rem;
+                        int totalNumbers = quo + (rem == 0 ? 0 : 1);
+                        send_object.put("TOT", totalNumbers);
+                        String NEW_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/ita.wav";
+                        //FileOutputStream fs = new FileOutputStream(NEW_FILE_PATH);
+                        for (int index = 1; index < totalNumbers; ++index ) {
+                            send_object.put("INDEX", index);
+                            byte[] bs = new byte[MAXBYTES];
+                            System.arraycopy(audioItem.transData, MAXBYTES * (index-1), bs, 0, MAXBYTES);
+                            String bS = Base64.encodeToString(bs, Base64.DEFAULT);
+                            send_object.put("AUDIO", bS);
+                            int len = send_object.toString().getBytes().length;
+                            String lenString = String.format("%05d", len);
+                            send_object.put("LEN", lenString);
+                            String send_content = send_object.toString();
+                            DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+                            s_socket_queue.send(dp_send_audio);
+
+                            try {
+                                Thread.sleep(3000);
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                        send_object.put("INDEX", totalNumbers);
+                        byte[] bs = new byte[lastLen];
+                        System.arraycopy(audioItem.transData, MAXBYTES * (totalNumbers - 1), bs, 0, lastLen);
+                        String bS = Base64.encodeToString(bs, Base64.DEFAULT);
+
+                        send_object.put("AUDIO", bS);
+                        int len = send_object.toString().getBytes().length;
+                        String lenString = String.format("%05d", len);
+                        send_object.put("LEN", lenString);
+
+                        String send_content = send_object.toString();
+                        DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
+                        //DatagramPacket dp_send_audio = new DatagramPacket(send_content.getBytes(), 5 * 64 * 1024, APP_ADD, SERVER_RECEIVE_PORT);
+                        s_socket_queue.send(dp_send_audio);
+
+                        tries_queue++;
+
+                        //send a series of audio packages every 5 seconds
+                        try {
+                            Thread.sleep(5 * 1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (tries_queue == MAXNUM_QUEUE) {
+                        updateUploadButton(1);
+                        ifToSendQueue = false;
+                        tries_queue++;
+                    }
                 }
             } catch (UnknownHostException e) {
                 e.printStackTrace();
@@ -686,11 +827,20 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         if (event !=null) {
             boolean ack =event.isMsg_ack();
             if (ack) {
-                ifToSendAudio = false;
-                tries_audio = 0;
-                //ifCurUpload = false;
-                updateUploadButton(false);
+                if (isSendingQueue) {
+                    ifToSendQueue = false;
+                    tries_queue = 0;
+                    audioItemQueue.poll();
+                    updateUploadButton(0);
+                    isSendingQueue = false;
+                } else {
+                    ifToSendAudio = false;
+                    tries_audio = 0;
+                    //ifCurUpload = false;
+                    updateUploadButton(0);
+                }
                 Toast.makeText(SpeechActivity.this, "成功发送音频", Toast.LENGTH_LONG).show();
+                checkQueue();
             }
         }
     }
@@ -710,11 +860,26 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void updateUploadButton(boolean cur) {
-        if (cur) {
+    private void updateUploadButton(int cur) {
+//        if (cur) {
+//            buttonUpload.setBackgroundColor(getResources().getColor(R.color.colorWarning));
+//        } else {
+//            buttonUpload.setBackgroundColor(getResources().getColor(R.color.silver));
+//        }
+        if (cur == 0) {
+            buttonUpload.setBackgroundColor(getResources().getColor(R.color.silver));
+        } else if (cur == 1) {
             buttonUpload.setBackgroundColor(getResources().getColor(R.color.colorWarning));
         } else {
-            buttonUpload.setBackgroundColor(getResources().getColor(R.color.silver));
+            buttonUpload.setBackgroundColor(getResources().getColor(R.color.golden));
+        }
+    }
+
+    private void checkQueue() {
+        if (!audioItemQueue.isEmpty()) {
+            ifToSendQueue = true;
+            isSendingQueue = true;
+            tries_queue = 0;
         }
     }
 }

@@ -87,8 +87,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Button button1, button2, button3, button4, button5, button6, button7, button8, button9;
     //buttons for different functions
     private Button buttonSpeech, buttonPermission, buttonFinish;
-    private Button buttonResetIP, buttonChangeIP, buttonStartAll;
-    private EditText text_IP;
+//    private Button buttonResetIP, buttonChangeIP, buttonStartAll;
+//    private EditText text_IP;
     private RelativeLayout relativeLayout;
     private GestureDetector gestureDetector;
     public static TextView breakWarningMain;
@@ -132,6 +132,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Dialog mDialog;
     private Dialog mIPDialog;
 
+    private boolean isRunning = false;
+
     private double[] latitudes;
     private double[] longitudes;
 
@@ -166,10 +168,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         buttonPermission = findViewById(R.id.button_permission);
         buttonSpeech = findViewById(R.id.button_speech);
         buttonFinish = findViewById(R.id.button_finish);
-        buttonChangeIP = findViewById(R.id.button_change_IP);
-        buttonResetIP = findViewById(R.id.button_reset_IP);
-        buttonStartAll = findViewById(R.id.button_start_all);
-        text_IP = findViewById(R.id.edit_IP);
+        //buttonChangeIP = findViewById(R.id.button_change_IP);
+        //buttonResetIP = findViewById(R.id.button_reset_IP);
+        //buttonStartAll = findViewById(R.id.button_start_all);
+        //text_IP = findViewById(R.id.edit_IP);
         breakWarningMain = findViewById(R.id.text_break_main);
         breakWarningMain.setVisibility(View.VISIBLE);
 
@@ -207,30 +209,32 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startFinish();
             }
         });
+        startAll();
 
-        buttonResetIP.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resetIP();
-            }
-        });
-
-        buttonChangeIP.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeIP();
-            }
-        });
-
-        buttonStartAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startAll();
-            }
-        });
+//        buttonResetIP.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                resetIP();
+//            }
+//        });
+//
+//        buttonChangeIP.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                changeIP();
+//            }
+//        });
+//
+//        buttonStartAll.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startAll();
+//            }
+//        });
     }
 
     private void startAll() {
+        isRunning = true;
         //UDP threads: one for data receive, one for heart break, others for data sending issues. Only to receive data in MainActivity
 
         new UdpReceiveThread().start();
@@ -240,58 +244,58 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         new UdpBreakThread().start();
     }
 
-    private void changeIP() {
-        final String newIP = text_IP.getText().toString();
-        if (newIP == null || newIP.equals("")) {
-            Toast.makeText(MainActivity.this, "IP地址为空", Toast.LENGTH_LONG).show();
-        } else {
-            mOffTextView = new TextView(this);
-            mIPDialog = new android.app.AlertDialog.Builder(this)
-                    .setTitle("确认更改IP地址")
-                    .setCancelable(false)
-                    .setView(mOffTextView)
-                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            APP_IP = newIP;
-                            Toast.makeText(MainActivity.this, "修改IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
-                        }
-                    })
-                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            mIPDialog.dismiss();
-                        }
-                    })
-                    .create();
-            mIPDialog.show();
-            mIPDialog.setCanceledOnTouchOutside(false);
-        }
-    }
+//    private void changeIP() {
+//        final String newIP = text_IP.getText().toString();
+//        if (newIP == null || newIP.equals("")) {
+//            Toast.makeText(MainActivity.this, "IP地址为空", Toast.LENGTH_LONG).show();
+//        } else {
+//            mOffTextView = new TextView(this);
+//            mIPDialog = new android.app.AlertDialog.Builder(this)
+//                    .setTitle("确认更改IP地址")
+//                    .setCancelable(false)
+//                    .setView(mOffTextView)
+//                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            APP_IP = newIP;
+//                            Toast.makeText(MainActivity.this, "修改IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
+//                        }
+//                    })
+//                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            mIPDialog.dismiss();
+//                        }
+//                    })
+//                    .create();
+//            mIPDialog.show();
+//            mIPDialog.setCanceledOnTouchOutside(false);
+//        }
+//    }
 
-    private void resetIP() {
-        mOffTextView = new TextView(this);
-        mIPDialog = new android.app.AlertDialog.Builder(this)
-                .setTitle("确认重置IP地址")
-                .setCancelable(false)
-                .setView(mOffTextView)
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        APP_IP = "192.168.8.99";
-                        Toast.makeText(MainActivity.this, "重置IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mIPDialog.dismiss();
-                    }
-                })
-                .create();
-        mIPDialog.show();
-        mIPDialog.setCanceledOnTouchOutside(false);
-    }
+//    private void resetIP() {
+//        mOffTextView = new TextView(this);
+//        mIPDialog = new android.app.AlertDialog.Builder(this)
+//                .setTitle("确认重置IP地址")
+//                .setCancelable(false)
+//                .setView(mOffTextView)
+//                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        APP_IP = "192.168.8.99";
+//                        Toast.makeText(MainActivity.this, "重置IP地址为" + APP_IP, Toast.LENGTH_LONG).show();
+//                    }
+//                })
+//                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        mIPDialog.dismiss();
+//                    }
+//                })
+//                .create();
+//        mIPDialog.show();
+//        mIPDialog.setCanceledOnTouchOutside(false);
+//    }
 
 
     //check permissions (GPS info, audio, storage)
@@ -375,11 +379,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onDestroy();
         listenStatus = false;
         //close all UDP sockets
-        r_socket.close();
-        s_socket_connect.close();
-        s_socket_heart.close();
-        s_socket_navigation.close();
-        s_socket_break.close();
+        if (isRunning) {
+            r_socket.close();
+            s_socket_connect.close();
+            s_socket_heart.close();
+            s_socket_navigation.close();
+            s_socket_break.close();
+        }
+
     }
 
     @Override
@@ -406,227 +413,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         EventBus.getDefault().register(this);
         listenStatus = true;
     }
-
-//    public class UdpReceiveThread extends Thread {
-//        @Override
-//        public void run() {
-//            byte[] buf = new byte[1024];
-//
-//            try {
-//                String ipValidation = Validation.validateIP(APP_IP);
-//                Log.d("AndroidUDP", "IP:" + ipValidation);
-//
-//                InetAddress APP_ADD = InetAddress.getByName(APP_IP);
-//                s_socket = new DatagramSocket();
-//                r_socket = new DatagramSocket(APP_PORT);
-//
-//                JSONObject send_object = new JSONObject();
-//                send_object.put("CHK", "pandora");
-//                send_object.put("ETT", 10);
-//                send_object.put("LEN", "60000");
-//                int len = send_object.toString().getBytes().length;
-//                String lenString = String.format("%05d", len);
-//                send_object.put("LEN", lenString);
-//
-//                String send_content = send_object.toString();
-//
-//                DatagramPacket dp_send = new DatagramPacket(send_content.getBytes(), send_content.getBytes().length, APP_ADD, SERVER_RECEIVE_PORT);
-//                DatagramPacket dp_receive = new DatagramPacket(buf, 1024);
-//                r_socket.setSoTimeout(TIMEOUT);
-//                int tries = 0;
-//                boolean receivedResponse = false;
-//                //while (!receivedResponse && tries < MAXNUM) {
-//                while (!receivedResponse) {
-//                    Log.d("AndroidUDP", "Wait send.");
-//                    try {
-//                        s_socket.send(dp_send);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                        Log.d("AndroidUDP", "" + e.getMessage());
-//                    }
-////                    s_socket.close();
-//                    Log.d("AndroidUDP", "Send Check.");
-//
-//                    try {
-//                        r_socket.receive(dp_receive);
-//                        if (!dp_receive.getAddress().equals(APP_ADD)) {
-//                            throw new IOException("Received packet from an unknown source");
-//                        }
-//                        receivedResponse = true;
-//                        Log.d("AndroidUDP", "Received.");
-//                    } catch (Exception e) {
-//                        tries += 1;
-//                        Log.d("AndroidUDP", "Time out," + (10 - tries) + " more tries...");
-//                    }
-//
-//                    if (receivedResponse) {
-//                        while (listenStatus) {
-//                            r_socket.receive(dp_receive);
-//                            //dp_receive.getData();
-//
-//                            String rev_log_ = new String(dp_receive.getData(), 0, dp_receive.getLength());
-//                            JSONObject jsonObject_;
-//                            jsonObject_ = new JSONObject(rev_log_);
-//
-//                            try {
-//                                String chk = jsonObject_.getString("CHK");
-//                                int ETT = jsonObject_.getInt("ETT");
-//                                String LEN = jsonObject_.getString("LEN");
-//                                try {
-//                                    int length = Integer.parseInt(LEN);
-//                                } catch (Exception e) {
-//                                    e.printStackTrace();
-//                                }
-//
-//                                if (chk.equals("pandora")) {
-//                                    switch (ETT) {
-//                                        case 20 :
-//                                            try {
-//
-//                                                JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
-//                                                JSONObject jsonObjectHMI = jsonObject_.getJSONObject("HMI"); //BMi info
-//                                                JSONObject jsonObjectSTS = jsonObject_.getJSONObject("STS"); //states info
-//                                                JSONObject jsonObjectPOS = jsonObject_.getJSONObject("POS"); //position (GPS) info
-//                                                JSONObject jsonObjectALT = jsonObject_.getJSONObject("ALT"); // alert info
-//
-//                                                //time info
-//                                                int year = jsonObjectTIME.getInt("YEAR");
-//                                                int month = jsonObjectTIME.getInt("MON");
-//                                                int day = jsonObjectTIME.getInt("DAY");
-//                                                int hour = jsonObjectTIME.getInt("HOUR");
-//                                                int minute = jsonObjectTIME.getInt("MIN");
-//                                                int second = jsonObjectTIME.getInt("SEC");
-//
-//                                                //HMI info
-//                                                JSONObject jsonObjectHLB = jsonObjectHMI.getJSONObject("HLB");
-//                                                JSONObject jsonObjectACC = jsonObjectHMI.getJSONObject("ACC");
-//                                                //HLB info
-//                                                int HDM = jsonObjectHLB.getInt("HDM");
-//                                                int LDWL = jsonObjectHLB.getInt("LDWL");
-//                                                int LDWR = jsonObjectHLB.getInt("LDWR");
-//                                                int BSDL = jsonObjectHLB.getInt("BSDL");
-//                                                int BSDR = jsonObjectHLB.getInt("BSDR");
-//                                                //ACC info
-//                                                int DIS = jsonObjectACC.getInt("DIS");
-//                                                int GAP = jsonObjectACC.getInt("GAP");
-//                                                int TGT = jsonObjectACC.getInt("TGT");
-//                                                int APL = jsonObjectACC.getInt("APL");
-//                                                int BKP = jsonObjectACC.getInt("BKP");
-//                                                int TAG = jsonObjectACC.getInt("ATV"); //validation of DIS index number (1: valid-white 0:invalid-grey)
-//                                                //int TAG = 1;
-//                                                //STS info
-//                                                int VIDEO = jsonObjectSTS.getInt("VIDEO");
-//                                                int ETH = jsonObjectSTS.getInt("ETH");
-//                                                int CAN = jsonObjectSTS.getInt("CAN");
-//                                                int GPS = jsonObjectSTS.getInt("GPS");
-//                                                int SVC = jsonObjectSTS.getInt("SVC");
-//                                                int LIDAR = jsonObjectSTS.getInt("LIDAR");
-//                                                int AFE = jsonObjectSTS.getInt("AFE");
-//                                                int AIO = jsonObjectSTS.getInt("AIO");
-//                                                int EQM = jsonObjectSTS.getInt("EQM");
-//
-//                                                //Position info
-//                                                double LON = jsonObjectPOS.getDouble("LON");
-//                                                double LAT = jsonObjectPOS.getDouble("LAT");
-//
-//                                                //alert info
-//                                                int LVL = jsonObjectALT.getInt("LVL");
-//                                                int CNT = jsonObjectALT.getInt("CNT");
-//
-//                                                int[] post_show = new int[]{HDM, LDWL, LDWR, BSDL, BSDR, DIS, GAP, TGT, APL, BKP, TAG};
-//                                                int[] post_alert = new int[]{LVL, CNT};
-//                                                double[] post_gps = new double[]{LON, LAT};
-//                                                int[] post_time = new int[]{year, month, day, hour, minute, second};
-//
-//                                                EventBus.getDefault().post(new SendEvent(new int[]{VIDEO, ETH, CAN, GPS, SVC, LIDAR, AFE, AIO, EQM}, post_alert));
-//                                                EventBus.getDefault().post(new GuideEvent(new int[]{VIDEO, ETH, CAN, GPS, SVC, LIDAR, AFE, AIO, EQM}, post_alert, post_gps));
-//                                                EventBus.getDefault().post(new ShowEvent(post_show, post_alert));
-//                                                //EventBus.getDefault().post(new AlertEvent(post_alert));
-//                                            } catch (Exception e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                            break;
-//                                        case 21:
-//                                            try {
-//                                                JSONObject jsonObjectTIME = jsonObject_.getJSONObject("TIME"); //time info
-//                                                JSONArray jsonArrayPATH = jsonObject_.getJSONArray("PATH"); //path info (points GPS)
-//
-//                                                //time info
-//                                                int year = jsonObjectTIME.getInt("YEAR");
-//                                                int month = jsonObjectTIME.getInt("MON");
-//                                                int day = jsonObjectTIME.getInt("DAY");
-//                                                int hour = jsonObjectTIME.getInt("HOUR");
-//                                                int minute = jsonObjectTIME.getInt("MIN");
-//                                                int second = jsonObjectTIME.getInt("SEC");
-//
-//                                                //path (GPS) info
-//                                                int size = jsonArrayPATH.length();
-//                                                double[] longis = new double[size];
-//                                                double[] latis = new double[size];
-//                                                for (int i = 0; i < size; i++) {
-//                                                    JSONObject path = jsonArrayPATH.getJSONObject(i);
-//                                                    double longi = path.getDouble("LON");
-//                                                    double lati = path.getDouble("LAT");
-//                                                    longis[i] = longi;
-//                                                    latis[i] = lati;
-//                                                }
-//                                                GPSEvent gpsEvent = new GPSEvent(latis, longis);
-//                                                EventBus.getDefault().post(gpsEvent);
-//
-//                                            } catch (Exception e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                            break;
-//                                        case 23:
-//                                            //notify cancellation of navigation
-//                                            EventBus.getDefault().postSticky(new NavAbortEvent(true));
-//                                            break;
-//                                        case 31:
-//                                            //acknowledge for audio tag
-//                                            EventBus.getDefault().post(new SpeechAckEvent(true));
-//                                            break;
-//                                        case 40:
-//                                            try {
-//                                                String VIN = jsonObject_.getString("VIN");
-//                                                //give this VIN to MApplication instance
-//                                                MApplication.getInstance().setVIN(VIN);
-//                                            } catch (Exception e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                            break;
-//                                        default:
-//                                            break;
-//                                    }
-//
-//                                }
-//                            } catch (Exception e) {
-//                                e.printStackTrace();
-//                            }
-//
-//                            dp_receive.setLength(1024);
-//
-//                            receiveHandler.sendEmptyMessage(1);
-//
-////                            try {
-////                                Thread.sleep(500);
-////                            } catch (InterruptedException e) {
-////                                e.printStackTrace();
-////                            }
-//                        }
-//                    } else {
-//                    }
-//                }
-//            } catch (UnknownHostException e) {
-//                e.printStackTrace();
-//            } catch (SocketException e) {
-//                e.printStackTrace();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } catch (Exception e) {
-//                Log.d("AndroidUDP", e.getMessage());
-//            }
-//        }
-//    }
 
 //    thread to receive data from server
     public class UdpReceiveThread extends Thread {
