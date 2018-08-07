@@ -130,12 +130,14 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         private String transText;
         private int[] dates;
         private int[] times;
+        private int index;
 
-        AudioItem(byte[] transD, String transT, int[] date, int[] time) {
+        AudioItem(byte[] transD, String transT, int[] date, int[] time, int id) {
             transData = transD;
             transText = transT;
             dates = date;
             times = time;
+            index = id;
         }
 
     }
@@ -180,6 +182,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         });
 
         new UdpAudioThread().start();
+        new UdpQueueThread().start();
     }
 
     //扬声器开启和关闭
@@ -693,15 +696,15 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
 
                         tries_audio++;
 
-                        //send a series of audio packages every 5 seconds
+                        //send a series of audio packages every 3 seconds
                         try {
-                            Thread.sleep(5 * 1000);
+                            Thread.sleep( 3 * 1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
                     if (tries_audio == MAXNUM) {
-                        AudioItem item = new AudioItem(translationData, uploadText, curDates, curTimes);
+                        AudioItem item = new AudioItem(translationData, uploadText, curDates, curTimes, MApplication.getInstance().getAIN());
                         audioItemQueue.offer(item);
                         updateUploadButton(1);
                         ifToSendAudio = false;
@@ -747,7 +750,7 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         send_time.put("MIN", audioItem.times[1]);
                         send_time.put("SEC", audioItem.times[2]);
                         send_object.put("TIME", send_time);
-                        send_object.put("AIN", MApplication.getInstance().getAIN());
+                        send_object.put("AIN", audioItem.index);
                         send_object.put("TRAN", audioItem.transText);
 
                         //each package with audio data length MAXBYTES
@@ -797,9 +800,9 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
 
                         tries_queue++;
 
-                        //send a series of audio packages every 5 seconds
+                        //send a series of audio packages every 3 seconds
                         try {
-                            Thread.sleep(5 * 1000);
+                            Thread.sleep(3 * 1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }

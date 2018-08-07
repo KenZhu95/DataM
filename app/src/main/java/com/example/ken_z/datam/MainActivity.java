@@ -69,9 +69,9 @@ import static com.example.ken_z.datam.ShowActivity.breakWarningShow;
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener, GestureDetector.OnGestureListener {
     private static final String TAG = MainActivity.class.getName();
 
-    //public static final String APP_IP = "10.111.10.139";
+    public static final String APP_IP = "10.111.10.84";
     //public static final String APP_IP = "192.168.1.111";
-    public static String APP_IP = "192.168.8.99";
+    //public static String APP_IP = "192.168.8.99";
     private static final int APP_PORT = 9990;
     private static final int SERVER_RECEIVE_PORT = 9992;
 

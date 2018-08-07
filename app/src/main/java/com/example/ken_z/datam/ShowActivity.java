@@ -37,6 +37,8 @@ public class ShowActivity extends AppCompatActivity implements View.OnTouchListe
     Button level_5;
     Button buttonAPL;
     Button buttonBKP;
+
+    Button buttonSpeech;
     public static TextView breakWarningShow;
     private ConstraintLayout constraintLayout;
     private GestureDetector gestureDetector;
@@ -66,13 +68,28 @@ public class ShowActivity extends AppCompatActivity implements View.OnTouchListe
         breakWarningShow = findViewById(R.id.text_break_show);
         breakWarningShow.setVisibility(View.VISIBLE);
 
+        buttonSpeech = findViewById(R.id.button_speech_show);
+
 
         constraintLayout = findViewById(R.id.constraint_show);
         constraintLayout.setOnTouchListener(this);
         constraintLayout.setLongClickable(true);
         gestureDetector = new GestureDetector((GestureDetector.OnGestureListener) this);
+
+        buttonSpeech.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSpeech();
+            }
+        });
     }
 
+
+    //goto speech tag activity
+    private void startSpeech() {
+        Intent intent = new Intent(ShowActivity.this, SpeechActivity.class);
+        startActivity(intent);
+    }
 
     @Override
     protected void onStart() {
