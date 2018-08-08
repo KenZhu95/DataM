@@ -558,6 +558,19 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         super.onStart();
         //Event Bus register
         EventBus.getDefault().register(this);
+
+        //记录当前系统时间，以备发送给后台
+        Calendar calendar = Calendar.getInstance();
+        int curYear = calendar.get(Calendar.YEAR);
+        int curMonth = calendar.get(Calendar.MONTH) + 1;
+        int curDay = calendar.get(Calendar.DAY_OF_MONTH);
+
+        int curHour = calendar.get(Calendar.HOUR_OF_DAY);
+        int curMinute = calendar.get(Calendar.MINUTE);
+        int curSecond = calendar.get(Calendar.SECOND);
+
+        curDates = new int[]{curYear, curMonth, curDay};
+        curTimes = new int[]{curHour, curMinute, curSecond};
     }
 
     @Override
@@ -652,8 +665,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         int lastLen = rem == 0 ? MAXBYTES : rem;
                         int totalNumbers = quo + (rem == 0 ? 0 : 1);
                         send_object.put("TOT", totalNumbers);
-                        String NEW_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/ita.wav";
-                        //FileOutputStream fs = new FileOutputStream(NEW_FILE_PATH);
                         for (int index = 1; index < totalNumbers; ++index ) {
                             send_object.put("INDEX", index);
                             byte[] bs = new byte[MAXBYTES];
@@ -723,7 +734,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
         }
     }
 
-
     public class UdpQueueThread extends Thread {
         @Override
         public void run() {
@@ -760,7 +770,6 @@ public class SpeechActivity extends Activity implements View.OnClickListener {
                         int lastLen = rem == 0 ? MAXBYTES : rem;
                         int totalNumbers = quo + (rem == 0 ? 0 : 1);
                         send_object.put("TOT", totalNumbers);
-                        String NEW_FILE_PATH = Environment.getExternalStorageDirectory()+"/msc/ita.wav";
                         //FileOutputStream fs = new FileOutputStream(NEW_FILE_PATH);
                         for (int index = 1; index < totalNumbers; ++index ) {
                             send_object.put("INDEX", index);
