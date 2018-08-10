@@ -31,7 +31,8 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="wNpjIzjj8SnypK3pWSipwPOGR6mIwYNX" />
+            android:value="xfCPMo23GRHn0kx7dSTUZBLqOhmze6B9"
+            />
         <meta-data
             android:name="IFLYTEK_APPKEY"
             android:value="&apos;5b47082a&apos;" />
